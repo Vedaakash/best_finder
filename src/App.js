@@ -1,4 +1,6 @@
 // NEW: Import the 'auth' object we configured and the Firebase functions we need
+
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
@@ -26,6 +28,7 @@ export default function App() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoginModalOpen, setLoginModalOpen] = useState(false);
     const [isSignupModalOpen, setSignupModalOpen] = useState(false);
+    const [user, setUser] = useState(null);
 
     // Mock search results data
     const mockResults = [
@@ -50,6 +53,23 @@ export default function App() {
             }
         );
     }, []);
+
+    useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+            // User is signed in
+            setUser(currentUser);
+            console.log("User is logged in:", currentUser.email);
+        } else {
+            // User is signed out
+            setUser(null);
+            console.log("User is logged out.");
+        }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+}, []);
 
     // --- Handlers ---
     const handleSearch = (e) => {
