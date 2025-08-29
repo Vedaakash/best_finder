@@ -104,10 +104,24 @@ export default function App() {
                         <a onClick={() => setPage('about')} className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${page === 'about' && 'text-green-600'}`}>About</a>
                         <a onClick={() => setPage('contact')} className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${page === 'contact' && 'text-green-600'}`}>Contact</a>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <button onClick={() => setLoginModalOpen(true)} className="bg-transparent text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50">Login</button>
-                        <button onClick={() => setSignupModalOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 shadow">Sign Up</button>
-                    </div>
+                    
+<div className="flex items-center space-x-4">
+    {user ? (
+        // If the user IS logged in, show this:
+        <>
+            <span className="text-gray-700 text-sm font-medium">Welcome, {user.email}</span>
+            <button className="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600">
+                Logout
+            </button>
+        </>
+    ) : (
+        // If the user IS NOT logged in, show this:
+        <>
+            <button onClick={() => setLoginModalOpen(true)} className="bg-transparent text-green-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-green-50">Login</button>
+            <button onClick={() => setSignupModalOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 shadow">Sign Up</button>
+        </>
+    )}
+</div>
                 </div>
             </div>
         </nav>
