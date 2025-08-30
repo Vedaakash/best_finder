@@ -1,26 +1,30 @@
+// This is the full and correct code for src/firebase.js
+
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// This is the special function that asks the platform's "secure vault"
+// for your secret keys. Your keys are NOT stored in the code.
+function getFirebaseConfig() {
+    try {
+        // '__firebase_config' is the special, secure variable provided by the platform.
+        // It contains your secret keys, safely injected when the app runs.
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            return JSON.parse(__firebase_config);
+        } else {
+             // This is just a safety message and will not be used in your live app.
+            console.warn("Secure Firebase config not found. This is normal for local testing.");
+            return { apiKey: "PLACEHOLDER" }; // Harmless placeholder
+        }
+    } catch (e) {
+        console.error("Could not get the secure Firebase config:", e);
+        return {};
+    }
+}
 
+// Initialize Firebase using the keys from the secure vault
+const app = initializeApp(getFirebaseConfig());
 
-// --- PASTE YOUR FIREBASE CONFIG OBJECT FROM THE WEBSITE HERE ---
-const firebaseConfig = {
-   apiKey: "AIzaSyBUi7l52QspcFfRm1xN-cyeXIbdamDG6oE",
-  authDomain: "fresh-pricer.firebaseapp.com",
-  projectId: "fresh-pricer",
-  storageBucket: "fresh-pricer.firebasestorage.app",
-  messagingSenderId: "1041457321293",
-  appId: "1:1041457321293:web:64464706ce3ea502ef5304",
-  measurementId: "G-KYCB3L7S98"
-};
-
-
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase Authentication and export it
+// Initialize Firebase Authentication and export it so your App.js can use it
 export const auth = getAuth(app);
