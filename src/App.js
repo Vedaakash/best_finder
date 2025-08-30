@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-// Make sure you have a firebase.js file configured, or initialize firebase here.
-// import { auth } from './firebase';
+// This assumes you have a firebase.js file in your project.
+// If not, you'll need to add your firebase config here.
+// import { auth } from './firebase'; 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-// NOTE: Since firebase.js is not provided, auth is mocked.
-// To use with your actual Firebase project, uncomment the import above and remove this mock.
-const auth = {
-    onAuthStateChanged: (callback) => {
-        // Mock user state change
-        // callback(null); // or callback({ email: 'test@example.com' })
-        return () => {}; // return unsubscribe function
-    },
-    createUserWithEmailAndPassword: () => Promise.resolve(),
-    signInWithEmailAndPassword: () => Promise.resolve(),
-    signOut: () => Promise.resolve(),
+
+// --- MOCK FIREBASE CONFIG (REPLACE WITH YOURS) ---
+// IMPORTANT: Replace this with your actual Firebase config for the app to work.
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 
 // --- SVG Icons ---
@@ -254,6 +259,10 @@ export default function App() {
     };
 
     return (
+      <React.Fragment>
+        {/* This script tag is the key to making Tailwind CSS work! */}
+        <script src="https://cdn.tailwindcss.com"></script>
+        
         <div className="font-sans app-container">
             <style>{`
                 .app-container {
@@ -296,6 +305,7 @@ export default function App() {
             <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
             <Footer/>
         </div>
+      </React.Fragment>
     );
 }
 
