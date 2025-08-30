@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from './firebase';
+// Make sure you have a firebase.js file configured, or initialize firebase here.
+// import { auth } from './firebase';
+
+// NOTE: Since firebase.js is not provided, auth is mocked.
+// To use with your actual Firebase project, uncomment the import above and remove this mock.
+const auth = {
+    onAuthStateChanged: (callback) => {
+        // Mock user state change
+        // callback(null); // or callback({ email: 'test@example.com' })
+        return () => {}; // return unsubscribe function
+    },
+    createUserWithEmailAndPassword: () => Promise.resolve(),
+    signInWithEmailAndPassword: () => Promise.resolve(),
+    signOut: () => Promise.resolve(),
+};
+
 
 // --- SVG Icons ---
 const SearchIcon = () => (
@@ -25,7 +40,7 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
             <div className="flex items-center justify-between h-16">
                 <div className="flex items-center">
                     <span className="font-bold text-2xl text-green-600 cursor-pointer" onClick={() => { setPage('home'); setSearchTerm(''); setSearchResults([]); }}>
-                        VeggieFinder
+                        <b>freshpricer</b>
                     </span>
                 </div>
                 <div className="hidden md:flex items-center space-x-4">
@@ -43,7 +58,7 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
                         </>
                     ) : (
                         <>
-                            <button onClick={() => setLoginModalOpen(true)} className="bg-transparent text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors">Login</button>
+                            <button onClick={() => setLoginModalOpen(true)} className="login-button-hover bg-transparent text-green-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">Login</button>
                             <button onClick={() => setSignupModalOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 shadow-md hover:shadow-lg transition-all">Sign Up</button>
                         </>
                     )}
@@ -79,14 +94,17 @@ const FeaturedItems = ({ handleItemClickSearch }) => {
     const items = [
         { name: 'Tomato', image: 'https://placehold.co/300x200/FF6347/FFFFFF?text=Tomato' },
         { name: 'Onion', image: 'https://placehold.co/300x200/DDA0DD/FFFFFF?text=Onion' },
+        { name: 'Apple', image: 'https://placehold.co/300x200/FF0000/FFFFFF?text=Apple' },
         { name: 'Potato', image: 'https://placehold.co/300x200/DEB887/FFFFFF?text=Potato' },
+        { name: 'Banana', image: 'https://placehold.co/300x200/FFFF00/000000?text=Banana' },
         { name: 'Carrot', image: 'https://placehold.co/300x200/FF7F50/FFFFFF?text=Carrot' },
+        { name: 'Orange', image: 'https://placehold.co/300x200/FFA500/FFFFFF?text=Orange' },
         { name: 'Spinach', image: 'https://placehold.co/300x200/2E8B57/FFFFFF?text=Spinach' },
         { name: 'Broccoli', image: 'https://placehold.co/300x200/008000/FFFFFF?text=Broccoli' }
     ];
     return (
         <div className="w-full overflow-hidden relative py-12 group">
-             <h2 className="text-2xl font-bold text-gray-700 text-center mb-6">Or Click to Search Popular Items</h2>
+            <h2 className="text-2xl font-bold text-gray-700 text-center mb-6">Or Click to Search Popular Items</h2>
             <div className="flex animate-scroll group-hover:pause">
                 {[...items, ...items].map((item, index) => (
                     <div key={index} onClick={() => handleItemClickSearch(item.name)} className="flex-shrink-0 w-48 mx-4 text-center cursor-pointer">
@@ -102,11 +120,11 @@ const FeaturedItems = ({ handleItemClickSearch }) => {
 const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTerm, handleItemClickSearch }) => (
     <div className="min-h-screen flex flex-col items-center justify-center pt-16 overflow-hidden">
         <div className="text-center p-8 max-w-4xl mx-auto w-full">
-            <h1 className="text-5xl md:text-7xl font-extrabold text-gray-800 mb-4 animate-fade-in-down" style={{ animationDelay: '0.2s' }}>
-                Find the <span className="text-green-600">Freshest</span> Prices
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-4 animate-fade-in-down" style={{ animationDelay: '0.2s', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' }}>
+                Find the <span className="text-green-300">Best</span> Prices
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto animate-fade-in-down" style={{ animationDelay: '0.4s' }}>
-                Your one-stop destination to compare local vegetable prices. Save money and eat fresh every day!
+            <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto animate-fade-in-down" style={{ animationDelay: '0.4s' }}>
+                Your one-stop destination to compare local vegetable & fruit prices. Save money and eat fresh every day!
             </p>
             <div className="bg-white p-4 rounded-full shadow-2xl max-w-2xl w-full mx-auto animate-fade-in-down" style={{ animationDelay: '0.6s' }}>
                 <form onSubmit={handleSearch} className="flex items-center">
@@ -124,8 +142,8 @@ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTe
 const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, setSearchTerm, setSearchResults }) => (
     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center mb-12">
-            <h2 className="text-4xl font-extrabold text-gray-800 mb-2">Results for "<span className="text-green-600">{searchTerm}</span>"</h2>
-            <p className="text-gray-500">Showing prices near {location}</p>
+            <h2 className="text-4xl font-extrabold text-white mb-2" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.2)'}}>Results for "<span className="text-green-300">{searchTerm}</span>"</h2>
+            <p className="text-blue-100">Showing prices near {location}</p>
         </div>
         
         <div className="max-w-4xl mx-auto space-y-8">
@@ -149,7 +167,7 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, setSe
             ) : (
                 <div className="text-center py-16 bg-white/50 rounded-2xl animate-slide-in-up">
                     <p className="text-2xl font-semibold text-gray-600">No results found for "{searchTerm}".</p>
-                    <p className="text-gray-400 mt-2">Try searching for another vegetable.</p>
+                    <p className="text-gray-400 mt-2">Try searching for another item.</p>
                 </div>
             )}
         </div>
@@ -161,28 +179,28 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, setSe
 
 const AboutPage = () => (
      <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-         <div className="max-w-4xl mx-auto text-center bg-white/60 backdrop-blur-md p-10 rounded-2xl shadow-lg">
-              <h1 className="text-4xl font-extrabold text-gray-900">About VeggieFinder</h1>
-              <p className="mt-4 text-lg text-gray-600">Our mission is to bring transparency to local vegetable markets, helping you find the freshest produce at the best prices.</p>
-             <div className="mt-8 text-left">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Meet the Creator</h2>
-                <p className="text-gray-700 mb-4">My name is <span className="font-bold">Veda Akash</span>, and I'm a passionate developer dedicated to building tools that solve real-world problems. VeggieFinder was born from a simple idea: what if you could know the price of vegetables at different local shops before you even left the house?</p>
-                <p className="text-gray-700">This project combines my love for technology with a desire to help my community make smarter, healthier choices. I hope you find it useful!</p>
-             </div>
+         <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
+               <h1 className="text-4xl font-extrabold text-gray-900 text-center">About freshpricer</h1>
+               <p className="mt-4 text-lg text-gray-600 text-center">Our mission is to bring transparency to local markets, helping you find the freshest produce at the best prices.</p>
+              <div className="mt-8 text-left">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Meet the Creator</h2>
+                <p className="text-gray-700 mb-4 text-center">My name is <span className="font-bold">Veda Akash</span>, and I'm a passionate developer dedicated to building tools that solve real-world problems. freshpricer was born from a simple idea: what if you could know the price of vegetables at different local shops before you even left the house?</p>
+                <p className="text-gray-700 text-center">This project combines my love for technology with a desire to help my community make smarter, healthier choices. I hope you find it useful!</p>
+              </div>
          </div>
      </div>
 );
 
 const ContactPage = () => (
      <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-         <div className="max-w-4xl mx-auto text-center bg-white/60 backdrop-blur-md p-10 rounded-2xl shadow-lg">
-              <h1 className="text-4xl font-extrabold text-gray-900">Get In Touch</h1>
-              <p className="mt-4 text-lg text-gray-600">Have questions, suggestions, or feedback? I'd love to hear from you!</p>
+         <div className="max-w-4xl mx-auto text-center bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
+               <h1 className="text-4xl font-extrabold text-gray-900">Get In Touch</h1>
+               <p className="mt-4 text-lg text-gray-600">Have questions, suggestions, or feedback? I'd love to hear from you!</p>
          </div>
      </div>
 );
 
-const Footer = () => (<footer className="text-gray-600 py-8 mt-16 text-center"><p>&copy; 2024 VeggieFinder by Veda Akash. All Rights Reserved.</p></footer>);
+const Footer = () => (<footer className="text-blue-100 py-8 mt-16 text-center"><p>&copy; 2024 freshpricer by Veda Akash. All Rights Reserved.</p></footer>);
 
 export default function App() {
     const [page, setPage] = useState('home');
@@ -195,34 +213,17 @@ export default function App() {
     const [searchResults, setSearchResults] = useState([]);
 
     const mockDb = [
-        { id: 1, name: 'Tomato', shops: [
-            { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km' },
-            { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km' },
-            { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km' },
-        ]},
-        { id: 2, name: 'Onion', shops: [
-             { name: 'Farm Fresh', price: '₹30/kg', distance: '0.8km' },
-             { name: 'Organic World', price: '₹35/kg', distance: '3.1km' },
-             { name: 'Fresh Veggies Co.', price: '₹32/kg', distance: '1.2km' },
-        ]},
-        { id: 3, name: 'Potato', shops: [
-             { name: 'Daily Needs Grocery', price: '₹20/kg', distance: '2.5km' },
-             { name: 'Fresh Veggies Co.', price: '₹18/kg', distance: '1.2km' },
-             { name: 'Farm Fresh', price: '₹21/kg', distance: '0.8km' },
-             { name: 'Local Market Stall', price: '₹17/kg', distance: '0.5km' },
-        ]},
-         { id: 4, name: 'Carrot', shops: [
-             { name: 'Organic World', price: '₹40/kg', distance: '3.1km' },
-             { name: 'Fresh Veggies Co.', price: '₹38/kg', distance: '1.2km' },
-        ]},
-        { id: 5, name: 'Spinach', shops: [
-             { name: 'Fresh Veggies Co.', price: '₹15/bunch', distance: '1.2km' },
-             { name: 'Organic World', price: '₹20/bunch', distance: '3.1km' },
-        ]},
-        { id: 6, name: 'Broccoli', shops: [
-             { name: 'Organic World', price: '₹50/piece', distance: '3.1km' },
-             { name: 'Daily Needs Grocery', price: '₹55/piece', distance: '2.5km' },
-        ]},
+        // Vegetables
+        { id: 1, name: 'Tomato', shops: [ { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km' }, { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km' }, { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km' } ]},
+        { id: 2, name: 'Onion', shops: [ { name: 'Farm Fresh', price: '₹30/kg', distance: '0.8km' }, { name: 'Organic World', price: '₹35/kg', distance: '3.1km' }, { name: 'Fresh Veggies Co.', price: '₹32/kg', distance: '1.2km' } ]},
+        { id: 3, name: 'Potato', shops: [ { name: 'Daily Needs Grocery', price: '₹20/kg', distance: '2.5km' }, { name: 'Fresh Veggies Co.', price: '₹18/kg', distance: '1.2km' }, { name: 'Farm Fresh', price: '₹21/kg', distance: '0.8km' }, { name: 'Local Market Stall', price: '₹17/kg', distance: '0.5km' } ]},
+        { id: 4, name: 'Carrot', shops: [ { name: 'Organic World', price: '₹40/kg', distance: '3.1km' }, { name: 'Fresh Veggies Co.', price: '₹38/kg', distance: '1.2km' } ]},
+        { id: 5, name: 'Spinach', shops: [ { name: 'Fresh Veggies Co.', price: '₹15/bunch', distance: '1.2km' }, { name: 'Organic World', price: '₹20/bunch', distance: '3.1km' } ]},
+        { id: 6, name: 'Broccoli', shops: [ { name: 'Organic World', price: '₹50/piece', distance: '3.1km' }, { name: 'Daily Needs Grocery', price: '₹55/piece', distance: '2.5km' } ]},
+        // Fruits
+        { id: 7, name: 'Apple', shops: [ { name: 'Fruit Junction', price: '₹120/kg', distance: '1.5km' }, { name: 'Farm Fresh', price: '₹110/kg', distance: '0.8km' } ]},
+        { id: 8, name: 'Banana', shops: [ { name: 'Daily Needs Grocery', price: '₹40/dozen', distance: '2.5km' }, { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km' } ]},
+        { id: 9, name: 'Orange', shops: [ { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km' }, { name: 'Local Market Stall', price: '₹75/kg', distance: '0.5km' } ]}
     ];
 
     useEffect(() => { const unsubscribe = onAuthStateChanged(auth, currentUser => setUser(currentUser)); return () => unsubscribe(); }, []);
@@ -253,8 +254,18 @@ export default function App() {
     };
 
     return (
-        <div className="bg-gradient-to-br from-cyan-50 to-blue-100 min-h-screen font-sans">
+        <div className="font-sans app-container">
             <style>{`
+                .app-container {
+                    background-color: #00bfff;
+                    min-height: 100vh;
+                }
+                
+                .login-button-hover:hover {
+                    background-color: #16a34a; /* green-600 */
+                    color: white;
+                }
+
                 @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
                 .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
 
@@ -268,7 +279,8 @@ export default function App() {
                 .animate-slide-in-up-modal { animation: slide-in-up-modal 0.4s ease-out forwards; }
 
                 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-                .animate-scroll { animation: scroll 40s linear infinite; }
+                /* Animation speed increased: 20s -> 15s */
+                .animate-scroll { animation: scroll 15s linear infinite; }
                 .group-hover\\:pause:hover { animation-play-state: paused; }
                 
                 /* Page transition animation */
@@ -286,3 +298,4 @@ export default function App() {
         </div>
     );
 }
+
