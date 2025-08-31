@@ -13,10 +13,12 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject"
+    "start": "concurrently \"npm:tailwind:watch\" \"react-scripts start\"",
+    "build": "npm run tailwind:build && react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "tailwind:watch": "tailwindcss -i ./src/index.css -o ./src/tailwind.css --watch",
+    "tailwind:build": "tailwindcss -i ./src/index.css -o ./src/tailwind.css"
   },
   "eslintConfig": {
     "extends": [
@@ -39,7 +41,9 @@
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4"
   }
 }
+
