@@ -194,8 +194,26 @@ const ContactPage = () => (
      </div>
 );
 
-const Footer = () => (<footer className="text-blue-100 py-8 mt-16 text-center"><p>&copy; 2024 freshpricer by Veda Akash. All Rights Reserved.</p></footer>);
+ // This is the NEW code for the Footer component
 
+const Footer = () => (
+    <footer className="bg-gray-900 text-white pt-12 pb-8 mt-16 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h3 className="text-2xl font-bold mb-2">Get In Touch</h3>
+            <p className="text-gray-400 mb-6">Have questions or feedback? I'd love to hear from you.</p>
+            <div className="flex justify-center items-center space-x-6 mb-8">
+                <a href="mailto:vedaakashyendluri@gmail.com" className="text-sky-400 hover:text-sky-300 transition-colors">
+                    vedaakashyendluri@gmail.com
+                </a>
+                <span className="text-gray-500">|</span>
+                <p className="text-gray-300">Ahmamau, Uttar Pradesh, India</p>
+            </div>
+            <div className="border-t border-gray-700 pt-6">
+                <p className="text-gray-500 text-sm">&copy; 2024 VeggieFinder by Veda Akash. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+);
 export default function App() {
     const [page, setPage] = useState('home');
     const [location, setLocation] = useState('Lucknow, Uttar Pradesh');
@@ -259,7 +277,7 @@ export default function App() {
           <main>
               {renderPage()}
           </main>
-          <div className="bg-red-500 text-white p-2 mt-4">Tailwind test</div>
+           
           <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
           <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
           <Footer/>
