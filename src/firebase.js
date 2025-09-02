@@ -1,29 +1,24 @@
-// This is the new and correct code for src/firebase.js
-
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-// This function now securely reads your keys from your new .env file.
-function getFirebaseConfig() {
-    try {
-        // process.env.REACT_APP_FIREBASE_CONFIG is the standard way
-        // to access the variable you just created in your .env file.
-        const configString = process.env.REACT_APP_FIREBASE_CONFIG;
-        
-        if (configString) {
-            return JSON.parse(configString);
-        } else {
-            console.error("Firebase config not found in .env file. Make sure REACT_APP_FIREBASE_CONFIG is set.");
-            return {}; // Return empty to prevent a crash
-        }
-    } catch (e) {
-        console.error("Could not parse the Firebase config from .env file:", e);
-        return {};
-    }
-}
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+};
 
-// Initialize Firebase using the keys from your .env file
-const app = initializeApp(getFirebaseConfig());
 
-// Initialize and export Firebase Authentication
+const app = initializeApp(firebaseConfig);
+// src/firebase.js (right after initializeApp)
+console.log("[firebase:check]", {
+  apiKeyLen: String(app.options.apiKey || "").length,
+  apiKeyPrefix: String(app.options.apiKey || "").slice(0, 6),
+  projectId: app.options.projectId,
+  authDomain: app.options.authDomain,
+});
+
 export const auth = getAuth(app);
