@@ -108,7 +108,7 @@ const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
 
   const handleSubmit = () => {
     // Basic validation
-    if (rating === 0 || reviewText.trim() === '') {
+    if (rating === 0) {
       alert('Please select a rating and write a review.');
       return;
     }
@@ -194,36 +194,29 @@ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTe
     </div>
 );
 
-const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortOrder, setSortOrder, setShopToRate, setRatingModalOpen }) => {
+const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filters, setFilters, setShopToRate, setRatingModalOpen }) => {
   // Logic to sort the results based on the current sortOrder state
   const sortedResults = React.useMemo(() => {
-    if (!searchResults || searchResults.length === 0) {
-      return [];
-    }
-    
-    // Make a copy of the shops array to avoid changing the original state
+    if (!searchResults || searchResults.length === 0) return [];
+
     const sortedShops = [...searchResults[0].shops];
 
-    sortedShops.sort((a, b) => {
-      const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
-      const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
+    // First, sort by the active rating filter (if any)
+    if (filters.rating) {
+        sortedShops.sort((a, b) => filters.rating === 'asc' ? a.rating - b.rating : b.rating - a.rating);
+    }
 
-      switch (sortOrder) {
-        case 'price-asc':
-          return priceA - priceB;
-        case 'price-desc':
-          return priceB - priceA;
-        case 'rating-desc':
-          return b.rating - a.rating;
-        case 'rating-asc':
-          return a.rating - b.rating;
-        default:
-          return 0;
-      }
-    });
+    // Then, sort by the active price filter (this will be the primary sort if rating is not set)
+    if (filters.price) {
+        sortedShops.sort((a, b) => {
+            const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
+            const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
+            return filters.price === 'asc' ? priceA - priceB : priceB - priceA;
+        });
+    }
 
     return [{ ...searchResults[0], shops: sortedShops }];
-  }, [searchResults, sortOrder]);
+}, [searchResults, filters]);
 
 
   return (
@@ -234,12 +227,33 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortO
       </div>
 
       {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
-      <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2">
-        <button onClick={() => setSortOrder('price-asc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'price-asc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Price: Low to High</button>
-        <button onClick={() => setSortOrder('price-desc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'price-desc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Price: High to Low</button>
-        <button onClick={() => setSortOrder('rating-desc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'rating-desc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Rating: High to Low</button>
-        <button onClick={() => setSortOrder('rating-asc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'rating-asc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Rating: Low to High</button>
-      </div>
+      {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
+<div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2 filter-buttons">
+    <button 
+        onClick={() => setFilters(f => ({ ...f, price: f.price === 'asc' ? null : 'asc' }))} 
+        className={filters.price === 'asc' ? 'active' : ''}
+    >
+        Price: Low to High
+    </button>
+    <button 
+        onClick={() => setFilters(f => ({ ...f, price: f.price === 'desc' ? null : 'desc' }))} 
+        className={filters.price === 'desc' ? 'active' : ''}
+    >
+        Price: High to Low
+    </button>
+    <button 
+        onClick={() => setFilters(f => ({ ...f, rating: f.rating === 'desc' ? null : 'desc' }))} 
+        className={filters.rating === 'desc' ? 'active' : ''}
+    >
+        Rating: High to Low
+    </button>
+    <button 
+        onClick={() => setFilters(f => ({ ...f, rating: f.rating === 'asc' ? null : 'asc' }))} 
+        className={filters.rating === 'asc' ? 'active' : ''}
+    >
+        Rating: Low to High
+    </button>
+</div>
 
       <div className="max-w-4xl mx-auto space-y-8">
         {/* We now map over 'sortedResults' instead of 'searchResults' */}
@@ -341,7 +355,7 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [authError, setAuthError] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
-    const [sortOrder, setSortOrder] = useState('price-asc');
+    const [filters, setFilters] = useState({ price: 'asc', rating: null });
     const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   const [shopToRate, setShopToRate] = useState(null);
 
@@ -350,16 +364,36 @@ export default function App() {
   // Add this new handler function
   const handleReviewSubmit = (reviewData) => {
     console.log("New Review Submitted:", reviewData);
-    alert(`Thank you for reviewing ${reviewData.shopName}!`);
     
-    // TODO: In a real app, you would make an API call here to save the review to your database.
-    
+    setDb(currentDb => {
+      // Create a deep copy of the database to safely modify it
+      const newDb = JSON.parse(JSON.stringify(currentDb));
+      
+      // Find the specific shop that was reviewed
+      for (const item of newDb) {
+        const shop = item.shops.find(s => s.name === reviewData.shopName);
+        if (shop) {
+          // Calculate the new average rating
+          const totalRating = shop.rating * shop.reviews;
+          const newTotalReviews = shop.reviews + 1;
+          const newAverageRating = (totalRating + reviewData.rating) / newTotalReviews;
+          
+          // Update the shop's data
+          shop.rating = Math.round(newAverageRating * 10) / 10; // Round to one decimal place
+          shop.reviews = newTotalReviews;
+          break; // Stop searching once the shop is found and updated
+        }
+      }
+      return newDb;
+    });
+
     setRatingModalOpen(false); // Close the modal
+    alert(`Thank you for reviewing ${reviewData.shopName}!`);
   };
 
 
 
-    const mockDb = [
+    const initialDb = [
     { id: 1, name: 'Tomato', shops: [
       { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
       { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
@@ -390,6 +424,8 @@ export default function App() {
       { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 } 
     ]}
   ];
+  
+  const [db, setDb] = useState(initialDb);
 
     useEffect(() => { 
       if (!auth) return;
@@ -408,7 +444,7 @@ export default function App() {
     const performSearch = (term) => {
     setPage('search');
 
-    const item = mockDb.find(item => item.name.toLowerCase().includes(term.toLowerCase()));
+    const item = db.find(item => item.name.toLowerCase().includes(term.toLowerCase()));
     
     if (item) {
       // Filter shops by the user's location
@@ -443,10 +479,9 @@ export default function App() {
     searchTerm={searchTerm} 
     location={location} 
     searchResults={searchResults} 
-    setPage={resetSearch} 
-    sortOrder={sortOrder} 
-    setSortOrder={setSortOrder}
-    // Add these two new props
+    setPage={resetSearch}
+    filters={filters}
+    setFilters={setFilters}
     setShopToRate={setShopToRate}
     setRatingModalOpen={setRatingModalOpen}
   />;
