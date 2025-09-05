@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from 'react';
-// Corrected Firebase imports for a local project
-import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  onAuthStateChanged, 
+  signOut 
+} from "firebase/auth";
+import { auth } from "./firebase";
 // --- IMPORTANT: REPLACE WITH YOUR FIREBASE CONFIG ---
- const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
-};
-
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
+ 
 
 // --- SVG Icons ---
 const SearchIcon = () => (
@@ -43,9 +32,33 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
                     </span>
                 </div>
                 <div className="hidden md:flex items-center space-x-4">
-                    <a onClick={() => setPage('home')} className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${page === 'home' && 'text-green-600 font-semibold'}`}>Home</a>
-                    <a onClick={() => setPage('about')} className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${page === 'about' && 'text-green-600 font-semibold'}`}>About</a>
-                    <a onClick={() => setPage('contact')} className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${page === 'contact' && 'text-green-600 font-semibold'}`}>Contact</a>
+                    <button
+  onClick={() => setPage('home')}
+  className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
+    page === 'home' && 'text-green-600 font-semibold'
+  }`}
+>
+  Home
+</button>
+
+<button
+  onClick={() => setPage('about')}
+  className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
+    page === 'about' && 'text-green-600 font-semibold'
+  }`}
+>
+  About
+</button>
+
+<button
+  onClick={() => setPage('contact')}
+  className={`text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
+    page === 'contact' && 'text-green-600 font-semibold'
+  }`}
+>
+  Contact
+</button>
+
                 </div>
                 <div className="flex items-center space-x-4">
                     {user ? (
@@ -149,14 +162,22 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage }) => 
                         <h3 className="text-3xl font-bold text-gray-800 mb-4">{item.name}</h3>
                         <div className="space-y-4">
                             {item.shops.map(shop => (
-                                <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
-                                    <div>
-                                        <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
-                                        <p className="text-sm text-gray-500">{shop.distance}</p>
-                                    </div>
-                                    <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
-                                </div>
-                            ))}
+    <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
+        <div>
+            <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
+            
+            {/* This is the new part that adds ratings and reviews */}
+            <div className="flex items-center mt-1">
+                <span className="text-yellow-500">⭐</span>
+                <span className="text-gray-600 font-bold ml-1">{shop.rating}</span>
+                <span className="text-gray-500 text-sm ml-2">({shop.reviews} reviews)</span>
+            </div>
+
+            <p className="text-sm text-gray-500 mt-1">{shop.distance}</p>
+        </div>
+        <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
+    </div>
+))}
                         </div>
                     </div>
                 ))
@@ -227,13 +248,36 @@ export default function App() {
     const [searchResults, setSearchResults] = useState([]);
 
     const mockDb = [
-        { id: 1, name: 'Tomato', shops: [ { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km' }, { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km' }, { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km' } ]},
-        { id: 2, name: 'Onion', shops: [ { name: 'Farm Fresh', price: '₹30/kg', distance: '0.8km' }, { name: 'Organic World', price: '₹35/kg', distance: '3.1km' }, { name: 'Fresh Veggies Co.', price: '₹32/kg', distance: '1.2km' } ]},
-        { id: 3, name: 'Potato', shops: [ { name: 'Daily Needs Grocery', price: '₹20/kg', distance: '2.5km' }, { name: 'Fresh Veggies Co.', price: '₹18/kg', distance: '1.2km' }, { name: 'Farm Fresh', price: '₹21/kg', distance: '0.8km' } ]},
-        { id: 7, name: 'Apple', shops: [ { name: 'Fruit Junction', price: '₹120/kg', distance: '1.5km' }, { name: 'Farm Fresh', price: '₹110/kg', distance: '0.8km' } ]},
-        { id: 8, name: 'Banana', shops: [ { name: 'Daily Needs Grocery', price: '₹40/dozen', distance: '2.5km' }, { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km' } ]},
-        { id: 9, name: 'Orange', shops: [ { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km' } ]}
-    ];
+    { id: 1, name: 'Tomato', shops: [
+      { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
+      { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
+      { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
+      { name: 'Kanpur Mandi', price: '₹24/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
+    ]},
+    { id: 2, name: 'Onion', shops: [
+      { name: 'Farm Fresh', price: '₹30/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
+      { name: 'Organic World', price: '₹35/kg', distance: '3.1km', city: 'Lucknow', rating: 4.6, reviews: 95 },
+      { name: 'Fresh Veggies Co.', price: '₹32/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
+      { name: 'Varanasi Veggies', price: '₹28/kg', distance: '2.2km', city: 'Varanasi', rating: 4.7, reviews: 180 },
+    ]},
+    { id: 3, name: 'Potato', shops: [
+      { name: 'Daily Needs Grocery', price: '₹20/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
+      { name: 'Fresh Veggies Co.', price: '₹18/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
+      { name: 'Kanpur Mandi', price: '₹15/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
+      { name: 'Farm Fresh', price: '₹21/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
+    ]},
+    { id: 7, name: 'Apple', shops: [ 
+      { name: 'Fruit Junction', price: '₹120/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
+      { name: 'Farm Fresh', price: '₹110/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 } 
+    ]},
+    { id: 8, name: 'Banana', shops: [ 
+      { name: 'Daily Needs Grocery', price: '₹40/dozen', distance: '2.5km', city: 'Kanpur', rating: 4.1, reviews: 112 }, 
+      { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km', city: 'Varanasi', rating: 4.3, reviews: 89 } 
+    ]},
+    { id: 9, name: 'Orange', shops: [ 
+      { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 } 
+    ]}
+  ];
 
     useEffect(() => { 
       if (!auth) return;
@@ -250,9 +294,29 @@ export default function App() {
     const handleSearch = (e) => { e.preventDefault(); if (searchTerm.trim() === '') return; performSearch(searchTerm); };
     const handleItemClickSearch = (itemName) => { setSearchTerm(itemName); performSearch(itemName); }
     const performSearch = (term) => {
-        setPage('search');
-        setSearchResults(mockDb.filter(item => item.name.toLowerCase().includes(term.toLowerCase())));
+    setPage('search');
+
+    const item = mockDb.find(item => item.name.toLowerCase().includes(term.toLowerCase()));
+    
+    if (item) {
+      // Filter shops by the user's location
+      const filteredShops = item.shops.filter(shop => 
+        // This check ensures shop.city exists before filtering
+        shop.city && shop.city.toLowerCase().includes(location.split(',')[0].toLowerCase())
+      );
+
+      // Sort the filtered shops by price
+      const sortedShops = filteredShops.sort((a, b) => {
+        const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
+        const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
+        return priceA - priceB;
+      });
+      
+      setSearchResults([{ ...item, shops: sortedShops }]);
+    } else {
+      setSearchResults([]);
     }
+  }
 
     const handleSignup = async (email, password) => { setAuthError(null); try { await createUserWithEmailAndPassword(auth, email, password); setSignupModalOpen(false); } catch (error) { setAuthError(error.message); } };
     const handleLogin = async (email, password) => { setAuthError(null); try { await signInWithEmailAndPassword(auth, email, password); setLoginModalOpen(false); } catch (error) { setAuthError(error.message); } };
