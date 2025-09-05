@@ -149,50 +149,91 @@ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTe
     </div>
 );
 
-const SearchResultsPage = ({ searchTerm, location, searchResults, setPage }) => (
-    <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center mb-12">
-            <h2 className="text-4xl font-extrabold text-white mb-2 main-heading">Results for "<span className="text-green-300">{searchTerm}</span>"</h2>
-            <p className="text-blue-100 sub-heading">Showing prices near {location}</p>
-        </div>
-        <div className="max-w-4xl mx-auto space-y-8">
-           {searchResults.length > 0 ? (
-                searchResults.map((item, index) => (
-                    <div key={item.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 animate-slide-in-up" style={{ animationDelay: `${index * 120}ms` }}>
-                        <h3 className="text-3xl font-bold text-gray-800 mb-4">{item.name}</h3>
-                        <div className="space-y-4">
-                            {item.shops.map(shop => (
-    <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
-        <div>
-            <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
-            
-            {/* This is the new part that adds ratings and reviews */}
-            <div className="flex items-center mt-1">
-                <span className="text-yellow-500">⭐</span>
-                <span className="text-gray-600 font-bold ml-1">{shop.rating}</span>
-                <span className="text-gray-500 text-sm ml-2">({shop.reviews} reviews)</span>
-            </div>
+const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortOrder, setSortOrder }) => {
+  // Logic to sort the results based on the current sortOrder state
+  const sortedResults = React.useMemo(() => {
+    if (!searchResults || searchResults.length === 0) {
+      return [];
+    }
+    
+    // Make a copy of the shops array to avoid changing the original state
+    const sortedShops = [...searchResults[0].shops];
 
-            <p className="text-sm text-gray-500 mt-1">{shop.distance}</p>
-        </div>
-        <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
-    </div>
-))}
+    sortedShops.sort((a, b) => {
+      const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
+      const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
+
+      switch (sortOrder) {
+        case 'price-asc':
+          return priceA - priceB;
+        case 'price-desc':
+          return priceB - priceA;
+        case 'rating-desc':
+          return b.rating - a.rating;
+        case 'rating-asc':
+          return a.rating - b.rating;
+        default:
+          return 0;
+      }
+    });
+
+    return [{ ...searchResults[0], shops: sortedShops }];
+  }, [searchResults, sortOrder]);
+
+
+  return (
+    <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto text-center mb-12">
+        <h2 className="text-4xl font-extrabold text-white mb-2 main-heading">Results for "<span className="text-green-300">{searchTerm}</span>"</h2>
+        <p className="text-blue-100 sub-heading">Showing prices near {location}</p>
+      </div>
+
+      {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
+      <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2">
+        <button onClick={() => setSortOrder('price-asc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'price-asc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Price: Low to High</button>
+        <button onClick={() => setSortOrder('price-desc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'price-desc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Price: High to Low</button>
+        <button onClick={() => setSortOrder('rating-desc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'rating-desc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Rating: High to Low</button>
+        <button onClick={() => setSortOrder('rating-asc')} className={`px-4 py-2 text-sm rounded-full ${sortOrder === 'rating-asc' ? 'bg-green-600 text-white' : 'bg-white/80 text-gray-700'}`}>Rating: Low to High</button>
+      </div>
+
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* We now map over 'sortedResults' instead of 'searchResults' */}
+        {sortedResults.length > 0 ? (
+          sortedResults.map((item, index) => (
+            <div key={item.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 animate-slide-in-up" style={{ animationDelay: `${index * 120}ms` }}>
+              <h3 className="text-3xl font-bold text-gray-800 mb-4">{item.name}</h3>
+              <div className="space-y-4">
+                {/* This part for displaying the shop remains the same */}
+                {item.shops.map(shop => (
+                    <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
+                        <div>
+                            <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
+                            <div className="flex items-center mt-1">
+                                <span className="text-yellow-500">⭐</span>
+                                <span className="text-gray-600 font-bold ml-1">{shop.rating}</span>
+                                <span className="text-gray-500 text-sm ml-2">({shop.reviews} reviews)</span>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">{shop.distance}</p>
                         </div>
+                        <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
                     </div>
-                ))
-            ) : (
-                <div className="text-center py-16 bg-white/50 rounded-2xl animate-slide-in-up">
-                    <p className="text-2xl font-semibold text-gray-600">No results found for "{searchTerm}".</p>
-                    <p className="text-gray-400 mt-2">Try searching for another item.</p>
-                </div>
-            )}
-        </div>
-         <button onClick={() => setPage('home')} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
-            Back to Home
-        </button>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-16 bg-white/50 rounded-2xl animate-slide-in-up">
+            <p className="text-2xl font-semibold text-gray-600">No results found for "{searchTerm}".</p>
+            <p className="text-gray-400 mt-2">Try searching for another item.</p>
+          </div>
+        )}
+      </div>
+      <button onClick={() => setPage('home')} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
+        Back to Home
+      </button>
     </div>
-);
+  );
+};
 
 const AboutPage = () => (
      <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
@@ -246,6 +287,7 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [authError, setAuthError] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
+    const [sortOrder, setSortOrder] = useState('price-asc');
 
     const mockDb = [
     { id: 1, name: 'Tomato', shops: [
@@ -327,7 +369,7 @@ export default function App() {
         case 'home':
           return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
         case 'search':
-          return <SearchResultsPage searchTerm={searchTerm} location={location} searchResults={searchResults} setPage={resetSearch} />;
+          return <SearchResultsPage searchTerm={searchTerm} location={location} searchResults={searchResults} setPage={resetSearch} sortOrder={sortOrder} setSortOrder={setSortOrder} />;
         case 'about':
           return <AboutPage />;
         case 'contact':
