@@ -427,11 +427,35 @@ export default function App() {
   
   const [db, setDb] = useState(initialDb);
 
+    // In the App() component, below your other useEffect
+// In your App() component
+
     useEffect(() => { 
-      if (!auth) return;
-      const unsubscribe = onAuthStateChanged(auth, currentUser => setUser(currentUser)); 
-      return () => unsubscribe(); 
+        if (!auth) return;
+        const unsubscribe = onAuthStateChanged(auth, currentUser => setUser(currentUser)); 
+        return () => unsubscribe(); 
     }, []);
+  useEffect(() => {
+    // This effect runs whenever the search term or the main database changes
+    if (searchTerm.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    const item = db.find(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (item) {
+      const filteredShops = item.shops.filter(shop => 
+        shop.city && shop.city.toLowerCase().includes(location.split(',')[0].toLowerCase())
+      );
+      
+      // We keep a temporary copy of the found item but with the filtered shops
+      const result = [{ ...item, shops: filteredShops }];
+      setSearchResults(result);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchTerm, location, db]); // The key is adding `db` to this list
     
     const resetSearch = () => {
       setSearchTerm('');
@@ -439,32 +463,20 @@ export default function App() {
       setPage('home');
     }
 
-    const handleSearch = (e) => { e.preventDefault(); if (searchTerm.trim() === '') return; performSearch(searchTerm); };
-    const handleItemClickSearch = (itemName) => { setSearchTerm(itemName); performSearch(itemName); }
-    const performSearch = (term) => {
-    setPage('search');
+    const handleSearch = (e) => {
+  e.preventDefault();
+  setPage('search');
+  // The useEffect will now handle the rest
+};
 
-    const item = db.find(item => item.name.toLowerCase().includes(term.toLowerCase()));
-    
-    if (item) {
-      // Filter shops by the user's location
-      const filteredShops = item.shops.filter(shop => 
-        // This check ensures shop.city exists before filtering
-        shop.city && shop.city.toLowerCase().includes(location.split(',')[0].toLowerCase())
-      );
+const handleItemClickSearch = (itemName) => {
+  setSearchTerm(itemName);
+  setPage('search');
+  // The useEffect will now handle the rest
+};
 
-      // Sort the filtered shops by price
-      const sortedShops = filteredShops.sort((a, b) => {
-        const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
-        const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
-        return priceA - priceB;
-      });
-      
-      setSearchResults([{ ...item, shops: sortedShops }]);
-    } else {
-      setSearchResults([]);
-    }
-  }
+     
+  
 
     const handleSignup = async (email, password) => { setAuthError(null); try { await createUserWithEmailAndPassword(auth, email, password); setSignupModalOpen(false); } catch (error) { setAuthError(error.message); } };
     const handleLogin = async (email, password) => { setAuthError(null); try { await signInWithEmailAndPassword(auth, email, password); setLoginModalOpen(false); } catch (error) { setAuthError(error.message); } };
@@ -475,7 +487,7 @@ export default function App() {
         case 'home':
           return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
         case 'search':
-  return <SearchResultsPage 
+  return <SearchResultsPage
     searchTerm={searchTerm} 
     location={location} 
     searchResults={searchResults} 
@@ -493,7 +505,7 @@ export default function App() {
           return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
       }
     };
-
+  
     return (
         <div className="font-sans">
           <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} />
@@ -512,4 +524,6 @@ export default function App() {
           <Footer/>
         </div>
     );
-}
+  
+  }
+  
