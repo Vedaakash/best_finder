@@ -99,7 +99,52 @@ const AuthModal = ({ type, isOpen, onClose, handleAuth, authError }) => {
         </div>
     );
 };
+// A new component for submitting reviews
+const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
 
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    // Basic validation
+    if (rating === 0 || reviewText.trim() === '') {
+      alert('Please select a rating and write a review.');
+      return;
+    }
+    onSubmit({ shopName: shop.name, rating, reviewText });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Rate {shop.name}</h2>
+        
+        {/* Star Rating Input */}
+        <div className="flex justify-center my-4">
+          {[1, 2, 3, 4, 5].map(star => (
+            <button key={star} onClick={() => setRating(star)} className="text-4xl">
+              <span className={star <= rating ? 'text-yellow-400' : 'text-gray-300'}>★</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Review Text Area */}
+        <textarea
+          value={reviewText}
+          onChange={(e) => setReviewText(e.target.value)}
+          placeholder="Share your experience..."
+          className="shadow-inner appearance-none border border-gray-200 rounded-lg w-full py-3 px-4 text-gray-700 h-28"
+        />
+
+        <button onClick={handleSubmit} className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
+          Submit Review
+        </button>
+      </div>
+    </div>
+  );
+};
 const FeaturedItems = ({ handleItemClickSearch }) => {
     const items = [
         { name: 'Tomato', image: 'https://placehold.co/300x200/FF6347/FFFFFF?text=Tomato' },
@@ -149,7 +194,7 @@ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTe
     </div>
 );
 
-const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortOrder, setSortOrder }) => {
+const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortOrder, setSortOrder, setShopToRate, setRatingModalOpen }) => {
   // Logic to sort the results based on the current sortOrder state
   const sortedResults = React.useMemo(() => {
     if (!searchResults || searchResults.length === 0) {
@@ -202,23 +247,32 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, sortO
           sortedResults.map((item, index) => (
             <div key={item.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 animate-slide-in-up" style={{ animationDelay: `${index * 120}ms` }}>
               <h3 className="text-3xl font-bold text-gray-800 mb-4">{item.name}</h3>
-              <div className="space-y-4">
-                {/* This part for displaying the shop remains the same */}
-                {item.shops.map(shop => (
-                    <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
-                        <div>
-                            <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
-                            <div className="flex items-center mt-1">
-                                <span className="text-yellow-500">⭐</span>
-                                <span className="text-gray-600 font-bold ml-1">{shop.rating}</span>
-                                <span className="text-gray-500 text-sm ml-2">({shop.reviews} reviews)</span>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-1">{shop.distance}</p>
-                        </div>
-                        <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
-                    </div>
-                ))}
+              
+<div className="space-y-4">
+  
+  {item.shops.map(shop => (
+      <div key={shop.name} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-lg hover:bg-green-50 transition-colors">
+          <div>
+              <p className="font-semibold text-lg text-gray-700">{shop.name}</p>
+              <div className="flex items-center mt-1">
+                  <span className="text-yellow-500">⭐</span>
+                  <span className="text-gray-600 font-bold ml-1">{shop.rating}</span>
+                  <span className="text-gray-500 text-sm ml-2">({shop.reviews} reviews)</span>
               </div>
+              <p className="text-sm text-gray-500 mt-1">{shop.distance}</p>
+          </div>
+          <div className="flex flex-col items-end">
+              <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
+              <button 
+                onClick={() => { setShopToRate(shop); setRatingModalOpen(true); }}
+                className="mt-2 text-xs text-blue-600 hover:underline"
+              >
+                Rate & Review
+              </button>
+          </div>
+      </div>
+  ))}
+</div>
             </div>
           ))
         ) : (
@@ -288,6 +342,22 @@ export default function App() {
     const [authError, setAuthError] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [sortOrder, setSortOrder] = useState('price-asc');
+    const [isRatingModalOpen, setRatingModalOpen] = useState(false);
+  const [shopToRate, setShopToRate] = useState(null);
+
+  // ...
+  
+  // Add this new handler function
+  const handleReviewSubmit = (reviewData) => {
+    console.log("New Review Submitted:", reviewData);
+    alert(`Thank you for reviewing ${reviewData.shopName}!`);
+    
+    // TODO: In a real app, you would make an API call here to save the review to your database.
+    
+    setRatingModalOpen(false); // Close the modal
+  };
+
+
 
     const mockDb = [
     { id: 1, name: 'Tomato', shops: [
@@ -369,7 +439,17 @@ export default function App() {
         case 'home':
           return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
         case 'search':
-          return <SearchResultsPage searchTerm={searchTerm} location={location} searchResults={searchResults} setPage={resetSearch} sortOrder={sortOrder} setSortOrder={setSortOrder} />;
+  return <SearchResultsPage 
+    searchTerm={searchTerm} 
+    location={location} 
+    searchResults={searchResults} 
+    setPage={resetSearch} 
+    sortOrder={sortOrder} 
+    setSortOrder={setSortOrder}
+    // Add these two new props
+    setShopToRate={setShopToRate}
+    setRatingModalOpen={setRatingModalOpen}
+  />;
         case 'about':
           return <AboutPage />;
         case 'contact':
@@ -388,6 +468,12 @@ export default function App() {
            
           <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
           <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
+          <RatingModal 
+        isOpen={isRatingModalOpen} 
+        onClose={() => setRatingModalOpen(false)} 
+        shop={shopToRate}
+        onSubmit={handleReviewSubmit}
+      />
           <Footer/>
         </div>
     );
