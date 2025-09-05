@@ -1,4 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import logo from './images/logo.jpg';
+import tomatoimg from './images/fresh tomato';
+import potatoimg from './images/potato';
+import bananaimg from './images/banana.jpg';
+import onionimg from './images/onion';
+import mirchiimg from './images/green chilli.webp';
+import orangeimg from './images/orange.jpg';
+import spinachimg from './images/spinach.jpeg';
+import carrotimg from './images/carrots.jpg';
+import appleimg from './images/apples.jpg';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -26,11 +36,10 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
     <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-                <div className="flex items-center">
-                    <span className="font-bold text-2xl text-green-600 cursor-pointer" onClick={() => setPage('home')}>
-                        <b>freshpricer</b>
-                    </span>
-                </div>
+                <div className="flex items-center cursor-pointer" onClick={() => setPage('home')}>
+    <img src={logo} alt="freshpricer logo" className="h-16 w-auto mr-2"/>
+    <span className="font-bold text-2xl text-green-600"><h1><b>FreshPricer</b></h1></span>
+</div>
                 <div className="hidden md:flex items-center space-x-4">
                     <button
   onClick={() => setPage('home')}
@@ -147,20 +156,21 @@ const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
 };
 const FeaturedItems = ({ handleItemClickSearch }) => {
     const items = [
-        { name: 'Tomato', image: 'https://placehold.co/300x200/FF6347/FFFFFF?text=Tomato' },
-        { name: 'Onion', image: 'https://placehold.co/300x200/DDA0DD/FFFFFF?text=Onion' },
-        { name: 'Apple', image: 'https://placehold.co/300x200/FF0000/FFFFFF?text=Apple' },
-        { name: 'Potato', image: 'https://placehold.co/300x200/DEB887/FFFFFF?text=Potato' },
-        { name: 'Banana', image: 'https://placehold.co/300x200/FFFF00/000000?text=Banana' },
-        { name: 'Carrot', image: 'https://placehold.co/300x200/FF7F50/FFFFFF?text=Carrot' },
-        { name: 'Orange', image: 'https://placehold.co/300x200/FFA500/FFFFFF?text=Orange' },
-        { name: 'Spinach', image: 'https://placehold.co/300x200/2E8B57/FFFFFF?text=Spinach' },
-        { name: 'Broccoli', image: 'https://placehold.co/300x200/008000/FFFFFF?text=Broccoli' }
+        { name: 'Tomato', image: tomatoimg },
+        { name: 'Onion', image: onionimg },
+        { name: 'Apple', image: appleimg },
+        { name: 'Potato', image: potatoimg },
+        { name: 'Banana', image: bananaimg },
+        { name: 'Carrot', image: carrotimg },
+        { name: 'Orange', image: orangeimg },
+        { name: 'Spinach', image:spinachimg },
+        { name: 'chilli', image: mirchiimg }
     ];
     return (
         <div className="w-full overflow-hidden relative py-12 group">
             <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Or Click to Search Popular Items</h2>
             <div className="flex animate-scroll group-hover:pause">
+                {/* This line duplicates the items array to ensure a seamless loop */}
                 {[...items, ...items].map((item, index) => (
                     <div key={index} onClick={() => handleItemClickSearch(item.name)} className="flex-shrink-0 w-48 mx-4 text-center cursor-pointer">
                         <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded-2xl shadow-lg transform hover:scale-110 transition-transform duration-300" />

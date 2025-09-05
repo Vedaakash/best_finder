@@ -1,9 +1,4 @@
-/*
-  This is the correct CSS file for your project.
-  It includes the necessary Tailwind directives and your custom styles.
-*/
-
-/* 1. Import Tailwind's base, components, and utilities. */
+/* Keep these top 3 lines */
 
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
@@ -113,9 +108,7 @@
   --tw-contain-style:  ;
 }
 
-/*
-  ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
-*/
+/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */
 
 /*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
@@ -552,26 +545,6 @@ video {
   display: none;
 }
 
-body {
-  background-color: #00bfff;
-  /* Deep Sky Blue */
-  font-family: 'Inter', sans-serif;
-  /* A nice, clean font */
-}
-
-/* Style for the main headings to add a text shadow */
-
-.main-heading {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* Style for the sub-headings for better contrast */
-
-.sub-heading {
-  color: #cceeff;
-  /* A lighter blue */
-}
-
 .fixed {
   position: fixed;
 }
@@ -618,6 +591,11 @@ body {
   margin-right: auto;
 }
 
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
 .mb-12 {
   margin-bottom: 3rem;
 }
@@ -638,8 +616,20 @@ body {
   margin-bottom: 2rem;
 }
 
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
 .ml-2 {
   margin-left: 0.5rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
 }
 
 .mt-12 {
@@ -678,6 +668,10 @@ body {
   height: 4rem;
 }
 
+.h-28 {
+  height: 7rem;
+}
+
 .h-32 {
   height: 8rem;
 }
@@ -692,6 +686,10 @@ body {
 
 .w-48 {
   width: 12rem;
+}
+
+.w-auto {
+  width: auto;
 }
 
 .w-full {
@@ -735,6 +733,14 @@ body {
   flex-direction: column;
 }
 
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
 .items-center {
   align-items: center;
 }
@@ -745,6 +751,10 @@ body {
 
 .justify-between {
   justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 0.5rem;
 }
 
 .space-x-4 > :not([hidden]) ~ :not([hidden]) {
@@ -1027,6 +1037,11 @@ body {
   color: rgb(219 234 254 / var(--tw-text-opacity, 1));
 }
 
+.text-blue-600 {
+  --tw-text-opacity: 1;
+  color: rgb(37 99 235 / var(--tw-text-opacity, 1));
+}
+
 .text-gray-300 {
   --tw-text-opacity: 1;
   color: rgb(209 213 219 / var(--tw-text-opacity, 1));
@@ -1085,6 +1100,16 @@ body {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
+
+.text-yellow-500 {
+  --tw-text-opacity: 1;
+  color: rgb(234 179 8 / var(--tw-text-opacity, 1));
 }
 
 .shadow-2xl {
@@ -1157,57 +1182,55 @@ body {
   transition-duration: 300ms;
 }
 
-/* Custom hover effect for the login button */
+/* --- ADD ALL YOUR CUSTOM STYLES AND ANIMATIONS BELOW --- */
 
-.login-button-hover:hover {
-  background-color: #16a34a;
-  /* green-600 */
-  color: white;
+body {
+  /* This is the sky blue color you attached */
+  background-color: #00bfff;
+  font-family: 'Inter', sans-serif;
 }
 
-/* All custom animations */
-
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-
-  100% {
-    opacity: 1;
-  }
+.main-heading {
+  /* Adds a subtle shadow to make text pop */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+/* This is the special green color for the word "Best" */
+
+.highlight-green {
+  color: #85e085;
+  /* A vibrant, "accepted" green */
 }
 
-@keyframes fade-in-down {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
+/* This animation makes the popular items scroll horizontally */
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
   }
 
-  100% {
-    opacity: 1;
-    transform: translateY(0);
+  to {
+    /* This value is critical for the seamless effect */
+    transform: translateX(-50%);
   }
 }
 
-.animate-fade-in-down {
-  animation: fade-in-down 0.6s ease-out forwards;
-  opacity: 0;
-}
+/* This is the "screen unlocking" animation you described for the search results */
 
 @keyframes slide-in-up {
-  0% {
+  from {
     opacity: 0;
     transform: translateY(40px);
   }
 
-  100% {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.animate-scroll {
+  animation: scroll 10s linear infinite;
 }
 
 .animate-slide-in-up {
@@ -1215,53 +1238,35 @@ body {
   animation: slide-in-up 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-@keyframes slide-in-up-modal {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-  }
+/* --- ADD THIS CODE TO THE BOTTOM OF src/index.css --- */
 
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.filter-buttons button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #374151;
+  /* gray-700 */
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
 }
 
-.animate-slide-in-up-modal {
-  animation: slide-in-up-modal 0.4s ease-out forwards;
+/* Style for the active button */
+
+.filter-buttons button.active {
+  background-color: #16a34a;
+  /* green-600 */
+  color: white;
+  font-weight: 600;
 }
 
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
+/* The hover glow for non-active buttons */
 
-  100% {
-    transform: translateX(-50%);
-  }
+.filter-buttons button:not(.active):hover {
+  border-color: #85e085;
+  /* The 'accepted' green color */
+  box-shadow: 0 0 10px #85e085, 0 0 5px #85e085;
 }
-
-.animate-scroll {
-  animation: scroll 15s linear infinite;
-}
-
-@keyframes page-transition-in {
-  0% {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.\[firebase\:check\] {
-  firebase: check;
-}
-
-/* 2. Add your custom styles and animations below. */
 
 .hover\:scale-105:hover {
   --tw-scale-x: 1.05;
@@ -1303,6 +1308,11 @@ body {
 .hover\:text-sky-300:hover {
   --tw-text-opacity: 1;
   color: rgb(125 211 252 / var(--tw-text-opacity, 1));
+}
+
+.hover\:underline:hover {
+  -webkit-text-decoration-line: underline;
+          text-decoration-line: underline;
 }
 
 .hover\:shadow-lg:hover {

@@ -1,4 +1,6 @@
-import { initializeApp } from "firebase/app";
+// src/firebase.js
+
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -11,14 +13,13 @@ const firebaseConfig = {
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
 
+// This is the important part that will show us a clear error
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.length < 20) {
+  throw new Error("Firebase apiKey is missing or invalid. Check your .env file and restart the server.");
+}
 
-const app = initializeApp(firebaseConfig);
-// src/firebase.js (right after initializeApp)
-console.log("[firebase:check]", {
-  apiKeyLen: String(app.options.apiKey || "").length,
-  apiKeyPrefix: String(app.options.apiKey || "").slice(0, 6),
-  projectId: app.options.projectId,
-  authDomain: app.options.authDomain,
-});
+// Initialize Firebase safely
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+export { app };

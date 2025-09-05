@@ -1,57 +1,79 @@
-/*
-  This is the correct CSS file for your project.
-  It includes the necessary Tailwind directives and your custom styles.
-*/
-
-/* 1. Import Tailwind's base, components, and utilities. */
+/* Keep these top 3 lines */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 2. Add your custom styles and animations below. */
-@layer base {
-  body {
-    background-color: #00bfff; /* Deep Sky Blue */
-    font-family: 'Inter', sans-serif; /* A nice, clean font */
+/* --- ADD ALL YOUR CUSTOM STYLES AND ANIMATIONS BELOW --- */
+
+body {
+  /* This is the sky blue color you attached */
+  background-color: #00bfff; 
+  font-family: 'Inter', sans-serif;
+}
+
+.main-heading {
+  /* Adds a subtle shadow to make text pop */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* This is the special green color for the word "Best" */
+.highlight-green {
+  color: #85e085; /* A vibrant, "accepted" green */
+}
+
+/* This animation makes the popular items scroll horizontally */
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* This value is critical for the seamless effect */
+    transform: translateX(-50%);
   }
 }
 
-@layer components {
-  /* Style for the main headings to add a text shadow */
-  .main-heading {
-     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+/* This is the "screen unlocking" animation you described for the search results */
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
   }
-
-  /* Style for the sub-headings for better contrast */
-  .sub-heading {
-      color: #cceeff; /* A lighter blue */
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@layer utilities {
-    /* Custom hover effect for the login button */
-    .login-button-hover:hover {
-        background-color: #16a34a; /* green-600 */
-        color: white;
-    }
+.animate-scroll {
+  animation: scroll 10s linear infinite;
+}
 
-    /* All custom animations */
-    @keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
-    .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+.animate-slide-in-up {
+  opacity: 0;
+  animation: slide-in-up 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
 
-    @keyframes fade-in-down { 0% { opacity: 0; transform: translateY(-20px); } 100% { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in-down { animation: fade-in-down 0.6s ease-out forwards; opacity: 0; }
-    
-    @keyframes slide-in-up { 0% { opacity: 0; transform: translateY(40px); } 100% { opacity: 1; transform: translateY(0); } }
-    .animate-slide-in-up { opacity: 0; animation: slide-in-up 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-    
-    @keyframes slide-in-up-modal { 0% { opacity: 0; transform: translateY(30px) scale(0.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-    .animate-slide-in-up-modal { animation: slide-in-up-modal 0.4s ease-out forwards; }
+/* --- ADD THIS CODE TO THE BOTTOM OF src/index.css --- */
 
-    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .animate-scroll { animation: scroll 15s linear infinite; }
-    .group-hover\:pause:hover { animation-play-state: paused; }
-    
-    @keyframes page-transition-in { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-    .animate-page-transition { animation: page-transition-in 0.5s ease-out; }
+.filter-buttons button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #374151; /* gray-700 */
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
+}
+
+/* Style for the active button */
+.filter-buttons button.active {
+  background-color: #16a34a; /* green-600 */
+  color: white;
+  font-weight: 600;
+}
+
+/* The hover glow for non-active buttons */
+.filter-buttons button:not(.active):hover {
+  border-color: #85e085; /* The 'accepted' green color */
+  box-shadow: 0 0 10px #85e085, 0 0 5px #85e085;
 }
