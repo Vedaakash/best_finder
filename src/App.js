@@ -32,7 +32,7 @@ const XIcon = () => (
 
 // --- UI Components ---
 
-const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignupModalOpen }) => (
+const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen }) => (
     <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
@@ -67,6 +67,13 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
 >
   Contact
 </button>
+
+<button 
+      onClick={() => setGameModalOpen(true)} 
+      className="bg-purple-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-purple-600"
+    >
+      Play Game 🎮
+    </button>
 
                 </div>
                 <div className="flex items-center space-x-4">
@@ -150,6 +157,187 @@ const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
         <button onClick={handleSubmit} className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
           Submit Review
         </button>
+      </div>
+    </div>
+  );
+};
+
+// In src/App.js, replace your old GameModal with this new version
+
+const GameModal = ({ isOpen, onClose }) => {
+  const GAME_WIDTH = 500;
+  const GAME_HEIGHT = 600;
+
+  // --- NEW & UPDATED GAME STATE ---
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(200); // Timer is already here
+  const [veggies, setVeggies] = useState([]);
+  const [basketPosition, setBasketPosition] = useState({ x: GAME_WIDTH / 2 });
+  const [gameOver, setGameOver] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  
+  // New state for additional features
+  const [speed, setSpeed] = useState(4); // Initial falling speed
+  const [spoiledCatches, setSpoiledCatches] = useState(0);
+  const lastBonusScore = React.useRef(0);
+
+  // --- UPGRADED GAME LOOP ---
+  useEffect(() => {
+    if (!isActive || gameOver) return;
+
+    const gameInterval = setInterval(() => {
+      // Move veggies down using the current speed
+      setVeggies(currentVeggies =>
+        currentVeggies.map(v => ({ ...v, y: v.y + speed })).filter(v => v.y < GAME_HEIGHT)
+      );
+
+      // Check for collisions
+      setVeggies(currentVeggies => {
+        const keptVeggies = [];
+        for (const veggie of currentVeggies) {
+          const basketLeft = basketPosition.x - 40;
+          const basketRight = basketPosition.x + 40;
+          
+          if (veggie.y > GAME_HEIGHT - 50 && veggie.x > basketLeft && veggie.x < basketRight) {
+            // Veggie was caught
+            if (veggie.itemType === 'bad') {
+              setScore(s => s + veggie.points); // Deduct points
+              setSpoiledCatches(c => c + 1);
+            } else if (veggie.itemType === 'bonus') {
+              setScore(s => s + (veggie.points * 2)); // Double points for bonus
+            } else {
+              setScore(s => s + veggie.points); // Normal points
+            }
+          } else {
+            keptVeggies.push(veggie); // Veggie was not caught
+          }
+        }
+        return keptVeggies;
+      });
+
+      // Randomly generate a new veggie
+      if (Math.random() < 0.12) {
+        const veggieTypes = [
+          { type: '🍅', points: 10, itemType: 'good' }, { type: '🧅', points: 5, itemType: 'good' },
+          { type: '🍎', points: 15, itemType: 'good' }, { type: '🍌', points: 20, itemType: 'good' }, // New fruit
+          { type: '🍉', points: 25, itemType: 'good' }, // New fruit
+          { type: '🤢', points: -15, itemType: 'bad' }  // Spoiled item
+        ];
+        const randomVeggie = veggieTypes[Math.floor(Math.random() * veggieTypes.length)];
+        const newVeggie = {
+          id: Date.now(),
+          x: Math.random() * (GAME_WIDTH - 30),
+          y: 0,
+          ...randomVeggie
+        };
+        setVeggies(currentVeggies => [...currentVeggies, newVeggie]);
+      }
+      
+      // Handle the timer
+      setTimeLeft(t => {
+        if (t <= 1) {
+          setGameOver(true);
+          setIsActive(false);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(gameInterval);
+  }, [isActive, gameOver, basketPosition.x, speed]);
+
+  // --- NEW LOGIC FOR GAME RULES ---
+  useEffect(() => {
+    // 1. Check for lose condition (3 spoiled catches)
+    if (spoiledCatches >= 3) {
+      setGameOver(true);
+      setIsActive(false);
+    }
+
+    // 2. Increase speed every 50 points
+    const speedLevel = Math.floor(score / 50);
+    const newSpeed = 4 + speedLevel;
+    if (newSpeed > speed) {
+      setSpeed(newSpeed);
+    }
+    
+    // 3. Spawn a bonus fruit every 150 points
+    const bonusThreshold = 150;
+    if (score >= lastBonusScore.current + bonusThreshold) {
+      lastBonusScore.current += bonusThreshold;
+      const bonusVeggie = {
+        id: Date.now(),
+        x: Math.random() * (GAME_WIDTH - 30),
+        y: 0,
+        type: '🌟', 
+        points: 50, // This will be doubled to 100 when caught
+        itemType: 'bonus'
+      };
+      setVeggies(currentVeggies => [...currentVeggies, bonusVeggie]);
+    }
+  }, [score, spoiledCatches]);
+
+  // Handle Mouse Movement
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const gameArea = e.currentTarget.getBoundingClientRect();
+      const newX = e.clientX - gameArea.left;
+      if (newX > 40 && newX < GAME_WIDTH - 40) setBasketPosition({ x: newX });
+    };
+    const gameArea = document.getElementById('game-area');
+    if (gameArea && isActive) gameArea.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      if (gameArea) gameArea.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isActive]);
+
+  const startGame = () => {
+    setScore(0);
+    setTimeLeft(60);
+    setVeggies([]);
+    setGameOver(false);
+    setIsActive(true);
+    setSpeed(4);
+    setSpoiledCatches(0);
+    lastBonusScore.current = 0;
+  };
+
+  if (!isOpen) return null;
+
+  // --- UPDATED JSX TO RENDER THE GAME ---
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      <div className="bg-gradient-to-b from-sky-400 to-sky-600 rounded-2xl shadow-2xl p-4 w-auto relative">
+        <button onClick={onClose} className="absolute top-2 right-2 text-white/70 hover:text-white"><XIcon /></button>
+        <div id="game-area" style={{ width: GAME_WIDTH, height: GAME_HEIGHT, cursor: 'none' }} className="overflow-hidden relative rounded-lg">
+          
+          <div className="absolute top-0 left-0 w-full flex justify-between p-4 text-white font-bold text-2xl z-10" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+            <span>Score: {score}</span>
+            <span>Time: {timeLeft}</span>
+            <span>Spoiled: {spoiledCatches}/3</span>
+          </div>
+
+          {(!isActive || gameOver) && (
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-20">
+              <h2 className="text-5xl text-white font-bold mb-4">{gameOver ? 'Game Over!' : 'Veggie Catcher'}</h2>
+              {gameOver && <p className="text-2xl text-white mb-4">Final Score: {score}</p>}
+              <button onClick={startGame} className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold hover:bg-green-600">{gameOver ? 'Play Again' : 'Start Game'}</button>
+            </div>
+          )}
+
+          {veggies.map(veggie => (
+            <div 
+              key={veggie.id} 
+              className={`text-3xl absolute ${veggie.itemType === 'bonus' ? 'bonus-fruit' : ''}`}
+              style={{ left: veggie.x, top: veggie.y }}
+            >
+              {veggie.type}
+            </div>
+          ))}
+
+          <div className="text-6xl absolute" style={{ left: basketPosition.x - 40, top: GAME_HEIGHT - 60 }}>🧺</div>
+        </div>
       </div>
     </div>
   );
@@ -368,6 +556,7 @@ export default function App() {
     const [filters, setFilters] = useState({ price: 'asc', rating: null });
     const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   const [shopToRate, setShopToRate] = useState(null);
+  const [isGameModalOpen, setGameModalOpen] = useState(false);
 
   // ...
   
@@ -518,7 +707,7 @@ const handleItemClickSearch = (itemName) => {
   
     return (
         <div className="font-sans">
-          <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} />
+          <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} />
           <main>
               {renderPage()}
           </main>
@@ -531,6 +720,8 @@ const handleItemClickSearch = (itemName) => {
         shop={shopToRate}
         onSubmit={handleReviewSubmit}
       />
+      <GameModal isOpen={isGameModalOpen} onClose={() => setGameModalOpen(false)} />
+
           <Footer/>
         </div>
     );
