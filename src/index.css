@@ -10,7 +10,32 @@ body {
   background-color: #00bfff; 
   font-family: 'Inter', sans-serif;
 }
+/* --- STYLES FOR FILTER BUTTONS --- */
+.filter-buttons button {
+  background-color: white;
+  color: #374151; /* A dark gray for text */
+  padding: 10px 20px;
+  border-radius: 9999px; /* This creates the pill shape */
+  font-weight: 500; /* Medium font weight */
+  border: 2px solid transparent; /* Start with an invisible border to prevent layout shift on hover */
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
 
+/* On hover: light green border and a slight lift */
+.filter-buttons button:hover {
+  border-color: #85e085; /* Light green border */
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Active state: "Codeforces accepted" green */
+.filter-buttons button.active {
+  background-color: #2E8B57; /* A strong, "accepted" green */
+  color: white;
+  border-color: #2E8B57;
+}
 .main-heading {
   /* Adds a subtle shadow to make text pop */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -44,9 +69,7 @@ body {
   }
 }
 
-.animate-scroll {
-  animation: scroll 10s linear infinite;
-}
+ 
 
 .animate-slide-in-up {
   opacity: 0;
@@ -55,25 +78,95 @@ body {
 
 /* --- ADD THIS CODE TO THE BOTTOM OF src/index.css --- */
 
-.filter-buttons button {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #374151; /* gray-700 */
-  transition: all 0.2s ease-in-out;
-  border: 1px solid transparent;
+/* --- REPLACE YOUR OLD FLOATING ANIMATION CSS WITH THIS BLOCK --- */
+
+/* The main container for the water and bubbles */
+.floating-container {
+  background-color: transparent; /* Changed to transparent to show the main page background */
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
 }
 
-/* Style for the active button */
-.filter-buttons button.active {
-  background-color: #16a34a; /* green-600 */
+/* The animated water effect using pseudo-elements */
+
+.water {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(to top, #00397A, #1a5ca3);
+  overflow: hidden;
+}
+
+/* This is the container that scrolls horizontally */
+.bubble-track {
+  display: flex;
+  width: 250%; 
+  animation: horizontal-scroll 40s linear infinite;
+}
+
+@keyframes horizontal-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-33.33%); }
+}
+
+/* The individual bubbles */
+.bubble {
+  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  margin: 0 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  /* Removed border and shadow for a cleaner look */
+  animation: float 6s ease-in-out infinite;
+  cursor: pointer;
+  position: relative;
+  /* Increased 'top' value for ~70% immersion in the water */
+  top: 100px; 
+}
+
+.bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bubble .label {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  width: 100%;
+  text-align: center;
   color: white;
-  font-weight: 600;
+  font-weight: bold;
+  text-shadow: 1px 1px 3px black;
 }
 
-/* The hover glow for non-active buttons */
-.filter-buttons button:not(.active):hover {
-  border-color: #85e085; /* The 'accepted' green color */
-  box-shadow: 0 0 10px #85e085, 0 0 5px #85e085;
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 0 0; }
+  100% { background-position: 120px 60px; }
+}
+
+/* Add these styles to make the footer stick to the bottom */
+html, body, #root, .font-sans {
+  height: 100%;
+}
+
+.font-sans {
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
 }

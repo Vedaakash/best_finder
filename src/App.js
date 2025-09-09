@@ -164,211 +164,245 @@ const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
 
 // In src/App.js, replace your old GameModal with this new version
 
-const GameModal = ({ isOpen, onClose }) => {
-  const GAME_WIDTH = 500;
+// In src/App.js, replace your old GameModal with this new, high-performance version
+
+// In src/App.js, replace your old GameModal with this new, final version
+
+// In src/App.js, replace your GameModal with this final version
+
+const GameModal = React.forwardRef(({ isOpen, onClose }, ref) => {
+  const GAME_WIDTH = 800;
   const GAME_HEIGHT = 600;
 
-  // --- NEW & UPDATED GAME STATE ---
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(200); // Timer is already here
+  const [timeLeft, setTimeLeft] = useState(0);
   const [veggies, setVeggies] = useState([]);
   const [basketPosition, setBasketPosition] = useState({ x: GAME_WIDTH / 2 });
-  const [gameOver, setGameOver] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-  
-  // New state for additional features
-  const [speed, setSpeed] = useState(4); // Initial falling speed
-  const [spoiledCatches, setSpoiledCatches] = useState(0);
-  const lastBonusScore = React.useRef(0);
+  const [gameState, setGameState] = useState('lobby');
+  const [gameMode, setGameMode] = useState(null);
+  const [lives, setLives] = useState(0);
+  const [isShaking, setIsShaking] = useState(false);
+  const [milestoneMessage, setMilestoneMessage] = useState('');
+  const lastMilestone = React.useRef(0);
+  const spawnCooldown = Math.max(200, 800 - score);
+  const lastSpawnTime = React.useRef(0);
 
-  // --- UPGRADED GAME LOOP ---
-  useEffect(() => {
-    if (!isActive || gameOver) return;
+  // --- State for Custom Game Settings ---
+  const [customTime, setCustomTime] = useState(180); // Default 3 minutes (180s)
+  const [customLives, setCustomLives] = useState(10);  // Default 10 lives
 
-    const gameInterval = setInterval(() => {
-      // Move veggies down using the current speed
-      setVeggies(currentVeggies =>
-        currentVeggies.map(v => ({ ...v, y: v.y + speed })).filter(v => v.y < GAME_HEIGHT)
-      );
-
-      // Check for collisions
-      setVeggies(currentVeggies => {
-        const keptVeggies = [];
-        for (const veggie of currentVeggies) {
-          const basketLeft = basketPosition.x - 40;
-          const basketRight = basketPosition.x + 40;
-          
-          if (veggie.y > GAME_HEIGHT - 50 && veggie.x > basketLeft && veggie.x < basketRight) {
-            // Veggie was caught
-            if (veggie.itemType === 'bad') {
-              setScore(s => s + veggie.points); // Deduct points
-              setSpoiledCatches(c => c + 1);
-            } else if (veggie.itemType === 'bonus') {
-              setScore(s => s + (veggie.points * 2)); // Double points for bonus
-            } else {
-              setScore(s => s + veggie.points); // Normal points
-            }
-          } else {
-            keptVeggies.push(veggie); // Veggie was not caught
-          }
-        }
-        return keptVeggies;
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      ref.current?.requestFullscreen().catch(err => {
+        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
       });
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
-      // Randomly generate a new veggie
-      if (Math.random() < 0.12) {
+  // Game Loop
+  useEffect(() => {
+    if (gameState !== 'active') return;
+    const gameInterval = setInterval(() => {
+      setVeggies(currentVeggies =>
+        currentVeggies.map(v => ({...v, y: v.y + v.speed, rotation: v.rotation + v.rotationSpeed})).filter(v => v.y < GAME_HEIGHT + 50)
+      );
+      const now = Date.now();
+      if (now - lastSpawnTime.current > spawnCooldown) {
+        lastSpawnTime.current = now;
         const veggieTypes = [
-          { type: '🍅', points: 10, itemType: 'good' }, { type: '🧅', points: 5, itemType: 'good' },
-          { type: '🍎', points: 15, itemType: 'good' }, { type: '🍌', points: 20, itemType: 'good' }, // New fruit
-          { type: '🍉', points: 25, itemType: 'good' }, // New fruit
-          { type: '🤢', points: -15, itemType: 'bad' }  // Spoiled item
+          { type: '🍅', points: 10 }, { type: '🧅', points: 5 }, { type: '🍎', points: 15 },
+          { type: '🍌', points: 20 }, { type: '🍉', points: 25 }, { type: '🤢', points: -15 }
         ];
         const randomVeggie = veggieTypes[Math.floor(Math.random() * veggieTypes.length)];
-        const newVeggie = {
-          id: Date.now(),
-          x: Math.random() * (GAME_WIDTH - 30),
-          y: 0,
-          ...randomVeggie
-        };
+        const newVeggie = {id: now, x: Math.random() * (GAME_WIDTH - 50) + 25, y: -50, speed: Math.random() * 2 + 3, rotation: 0, rotationSpeed: (Math.random() - 0.5) * 4, ...randomVeggie};
         setVeggies(currentVeggies => [...currentVeggies, newVeggie]);
       }
-      
-      // Handle the timer
-      setTimeLeft(t => {
-        if (t <= 1) {
-          setGameOver(true);
-          setIsActive(false);
-          return 0;
-        }
-        return t - 1;
-      });
     }, 1000 / 60);
-
     return () => clearInterval(gameInterval);
-  }, [isActive, gameOver, basketPosition.x, speed]);
+  }, [gameState, score]);
 
-  // --- NEW LOGIC FOR GAME RULES ---
+  // Handle Collisions
   useEffect(() => {
-    // 1. Check for lose condition (3 spoiled catches)
-    if (spoiledCatches >= 3) {
-      setGameOver(true);
-      setIsActive(false);
+    const veggiesAfterCollision = [];
+    let scoreGained = 0;
+    for (const veggie of veggies) {
+      const basketLeft = basketPosition.x - 50;
+      const basketRight = basketPosition.x + 50;
+      if (veggie.y > GAME_HEIGHT - 60 && veggie.y < GAME_HEIGHT - 30 && veggie.x > basketLeft && veggie.x < basketRight) {
+        scoreGained += veggie.points;
+        if (veggie.points > 0) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 200);
+        } else {
+          if (gameMode === 'lives') setLives(l => l - 1);
+        }
+      } else {
+        veggiesAfterCollision.push(veggie);
+      }
     }
+    if (scoreGained !== 0) {
+      setScore(s => s + scoreGained);
+      setVeggies(veggiesAfterCollision);
+    }
+  }, [veggies, basketPosition.x, gameMode]);
 
-    // 2. Increase speed every 50 points
-    const speedLevel = Math.floor(score / 50);
-    const newSpeed = 4 + speedLevel;
-    if (newSpeed > speed) {
-      setSpeed(newSpeed);
+  // Timer, Lives, and Milestone Messages Logic
+  useEffect(() => {
+    if (gameState !== 'active') return;
+    const milestones = { 200: "Good!", 400: "Excellent!", 600: "Marvelous!" };
+    for (const ms in milestones) {
+      if (score >= ms && lastMilestone.current < ms) {
+        lastMilestone.current = parseInt(ms);
+        setMilestoneMessage(milestones[ms]);
+        setTimeout(() => setMilestoneMessage(''), 2000);
+      }
     }
-    
-    // 3. Spawn a bonus fruit every 150 points
-    const bonusThreshold = 150;
-    if (score >= lastBonusScore.current + bonusThreshold) {
-      lastBonusScore.current += bonusThreshold;
-      const bonusVeggie = {
-        id: Date.now(),
-        x: Math.random() * (GAME_WIDTH - 30),
-        y: 0,
-        type: '🌟', 
-        points: 50, // This will be doubled to 100 when caught
-        itemType: 'bonus'
-      };
-      setVeggies(currentVeggies => [...currentVeggies, bonusVeggie]);
+    if (gameMode === 'timer' && timeLeft <= 0) {
+        setGameState('gameOver');
+    } else if (gameMode === 'lives' && lives <= 0) {
+        setGameState('gameOver');
     }
-  }, [score, spoiledCatches]);
+    if (gameMode === 'timer') {
+      const timerInterval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+      return () => clearInterval(timerInterval);
+    }
+  }, [gameState, gameMode, lives, timeLeft, score]);
 
   // Handle Mouse Movement
   useEffect(() => {
     const handleMouseMove = (e) => {
+      if(gameState !== 'active') return;
       const gameArea = e.currentTarget.getBoundingClientRect();
       const newX = e.clientX - gameArea.left;
-      if (newX > 40 && newX < GAME_WIDTH - 40) setBasketPosition({ x: newX });
+      if (newX > 50 && newX < GAME_WIDTH - 50) setBasketPosition({ x: newX });
     };
     const gameArea = document.getElementById('game-area');
-    if (gameArea && isActive) gameArea.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      if (gameArea) gameArea.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, [isActive]);
+    if (gameArea) gameArea.addEventListener('mousemove', handleMouseMove);
+    return () => { if (gameArea) gameArea.removeEventListener('mousemove', handleMouseMove); };
+  }, [gameState]);
 
-  const startGame = () => {
+  const startGame = (mode, value) => {
+    setGameMode(mode);
     setScore(0);
-    setTimeLeft(60);
     setVeggies([]);
-    setGameOver(false);
-    setIsActive(true);
-    setSpeed(4);
-    setSpoiledCatches(0);
-    lastBonusScore.current = 0;
+    if (mode === 'timer') {
+      setTimeLeft(value);
+      setLives(0);
+    } else if (mode === 'lives') {
+      setLives(value);
+      setTimeLeft(0);
+    }
+    setGameState('active');
+    lastMilestone.current = 0;
   };
 
   if (!isOpen) return null;
 
-  // --- UPDATED JSX TO RENDER THE GAME ---
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-      <div className="bg-gradient-to-b from-sky-400 to-sky-600 rounded-2xl shadow-2xl p-4 w-auto relative">
-        <button onClick={onClose} className="absolute top-2 right-2 text-white/70 hover:text-white"><XIcon /></button>
-        <div id="game-area" style={{ width: GAME_WIDTH, height: GAME_HEIGHT, cursor: 'none' }} className="overflow-hidden relative rounded-lg">
+      <div ref={ref} className="bg-gradient-to-b from-sky-400 to-sky-600 rounded-2xl shadow-2xl p-4 w-auto relative">
+        <button onClick={onClose} className="absolute top-2 right-2 text-white/70 hover:text-white z-30"><XIcon /></button>
+        <div id="game-area" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }} className={`overflow-hidden relative rounded-lg ${isShaking ? 'shake' : ''}`}>
           
-          <div className="absolute top-0 left-0 w-full flex justify-between p-4 text-white font-bold text-2xl z-10" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+          <div className="absolute top-0 left-0 w-full flex justify-between p-4 text-white font-bold text-2xl z-20" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
             <span>Score: {score}</span>
-            <span>Time: {timeLeft}</span>
-            <span>Spoiled: {spoiledCatches}/3</span>
+            {gameMode === 'timer' && <span>Time: {timeLeft}</span>}
+            {gameMode === 'lives' && <span>Lives: {lives}</span>}
           </div>
+          <button onClick={toggleFullScreen} className="absolute top-2 left-2 text-white/70 hover:text-white z-30">⛶</button>
 
-          {(!isActive || gameOver) && (
+          {milestoneMessage && (
+            <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+              <span className="milestone-popup">{milestoneMessage}</span>
+            </div>
+          )}
+
+          {gameState !== 'active' && (
             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-20">
-              <h2 className="text-5xl text-white font-bold mb-4">{gameOver ? 'Game Over!' : 'Veggie Catcher'}</h2>
-              {gameOver && <p className="text-2xl text-white mb-4">Final Score: {score}</p>}
-              <button onClick={startGame} className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold hover:bg-green-600">{gameOver ? 'Play Again' : 'Start Game'}</button>
+              {gameState === 'lobby' && <>
+                <h2 className="text-5xl text-white font-bold mb-8">Veggie Catcher</h2>
+                
+                {/* --- New Lobby UI with Sliders --- */}
+                <div className="bg-white/20 p-6 rounded-lg w-full max-w-sm text-white">
+                  <div className="mb-4">
+                    <label className="block font-bold mb-2">Timer Mode</label>
+                    <div className="flex items-center gap-4">
+                      <input type="range" min="60" max="300" step="60" value={customTime} onChange={e => setCustomTime(e.target.value)} className="w-full" />
+                      <span className="w-20 text-center">{customTime / 60} min</span>
+                    </div>
+                    <button onClick={() => startGame('timer', customTime)} className="w-full mt-2 bg-blue-500 text-white px-6 py-2 rounded-lg text-lg font-bold hover:bg-blue-600">Start Timer Mode</button>
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-2">Mistakes Mode</label>
+                    <div className="flex items-center gap-4">
+                      <input type="range" min="1" max="10" step="1" value={customLives} onChange={e => setCustomLives(e.target.value)} className="w-full" />
+                      <span className="w-20 text-center">{customLives} lives</span>
+                    </div>
+                    <button onClick={() => startGame('lives', customLives)} className="w-full mt-2 bg-red-500 text-white px-6 py-2 rounded-lg text-lg font-bold hover:bg-red-600">Start Mistakes Mode</button>
+                  </div>
+                </div>
+
+              </>}
+              {gameState === 'gameOver' && <>
+                <h2 className="text-5xl text-white font-bold mb-4">Game Over!</h2>
+                <p className="text-2xl text-white mb-8">Final Score: {score}</p>
+                <button onClick={() => setGameState('lobby')} className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold hover:bg-green-600">Play Again</button>
+              </>}
             </div>
           )}
 
           {veggies.map(veggie => (
-            <div 
-              key={veggie.id} 
-              className={`text-3xl absolute ${veggie.itemType === 'bonus' ? 'bonus-fruit' : ''}`}
-              style={{ left: veggie.x, top: veggie.y }}
-            >
+            <div key={veggie.id} className="text-4xl absolute" style={{ left: veggie.x, top: veggie.y, transform: `rotate(${veggie.rotation}deg)` }}>
               {veggie.type}
             </div>
           ))}
 
-          <div className="text-6xl absolute" style={{ left: basketPosition.x - 40, top: GAME_HEIGHT - 60 }}>🧺</div>
+          <div className="text-6xl absolute" style={{ left: basketPosition.x - 50, top: GAME_HEIGHT - 60 }}>🧺</div>
         </div>
       </div>
     </div>
   );
-};
+});
 const FeaturedItems = ({ handleItemClickSearch }) => {
     const items = [
         { name: 'Tomato', image: tomatoimg },
         { name: 'Onion', image: onionimg },
-        { name: 'Apple', image: appleimg },
+        { name: 'Apple', image: appleimg},
         { name: 'Potato', image: potatoimg },
         { name: 'Banana', image: bananaimg },
         { name: 'Carrot', image: carrotimg },
-        { name: 'Orange', image: orangeimg },
-        { name: 'Spinach', image:spinachimg },
-        { name: 'chilli', image: mirchiimg }
+        { name: 'Orange', image: orangeimg},
+        { name: 'Spinach', image: spinachimg },
+        { name: 'Chilli', image: mirchiimg }
     ];
+
     return (
-        <div className="w-full overflow-hidden relative py-12 group">
-            <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Or Click to Search Popular Items</h2>
-            <div className="flex animate-scroll group-hover:pause">
-                {/* This line duplicates the items array to ensure a seamless loop */}
-                {[...items, ...items].map((item, index) => (
-                    <div key={index} onClick={() => handleItemClickSearch(item.name)} className="flex-shrink-0 w-48 mx-4 text-center cursor-pointer">
-                        <img src={item.image} alt={item.name} className="w-full h-32 object-cover rounded-2xl shadow-lg transform hover:scale-110 transition-transform duration-300" />
-                        <p className="mt-2 font-semibold text-gray-600">{item.name}</p>
-                    </div>
-                ))}
+        <div className="w-full py-12">
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 mt-16">Or Click to Search Popular Items</h2>
+            
+            <div className="floating-container">
+                <div className="water"></div>
+                <div className="bubble-track">
+                    {/* We duplicate the list 3 times for a perfectly seamless loop */}
+                    {[...items, ...items, ...items].map((item, index) => (
+                        <div 
+                          key={index} 
+                          className="bubble" 
+                          onClick={() => handleItemClickSearch(item.name)}
+                          // This makes each bubble float at a different time
+                          style={{ animationDelay: `${index * 0.3}s` }} 
+                        >
+                            <img src={item.image} alt={item.name} />
+                            <div className="label">{item.name}</div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
-}
+};
 
 const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTerm, handleItemClickSearch }) => (
     <div className="min-h-screen flex flex-col items-center justify-center pt-16 overflow-hidden">
@@ -557,7 +591,7 @@ export default function App() {
     const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   const [shopToRate, setShopToRate] = useState(null);
   const [isGameModalOpen, setGameModalOpen] = useState(false);
-
+const gameModalRef = React.useRef(null);
   // ...
   
   // Add this new handler function
@@ -706,25 +740,30 @@ const handleItemClickSearch = (itemName) => {
     };
   
     return (
-        <div className="font-sans">
-          <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} />
-          <main>
-              {renderPage()}
-          </main>
-           
-          <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
-          <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
-          <RatingModal 
-        isOpen={isRatingModalOpen} 
-        onClose={() => setRatingModalOpen(false)} 
-        shop={shopToRate}
-        onSubmit={handleReviewSubmit}
-      />
-      <GameModal isOpen={isGameModalOpen} onClose={() => setGameModalOpen(false)} />
+        <div className="font-sans">
+          <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} />
+          <main>
+              {renderPage()}
+          </main>
+          
+          {/* This is the single, correct placement for your Footer */}
+          <Footer/>
 
-          <Footer/>
-        </div>
-    );
-  
-  }
+          {/* All your modals will now correctly appear over the main content and footer */}
+          <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
+          <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
+          <RatingModal 
+            isOpen={isRatingModalOpen} 
+            onClose={() => setRatingModalOpen(false)} 
+            shop={shopToRate}
+            onSubmit={handleReviewSubmit}
+          />
+          <GameModal 
+            isOpen={isGameModalOpen} 
+            onClose={() => setGameModalOpen(false)}
+            ref={gameModalRef}
+          />
+        </div>
+    );
+}
   
