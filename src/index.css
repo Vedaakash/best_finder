@@ -172,15 +172,21 @@ main {
 }
 
 
-/* --- ADD THIS CSS FOR THE 3D CUBE --- */
+/* --- REPLACE YOUR OLD CUBE CSS WITH THIS NEW BLOCK --- */
+
 .scene {
   width: 200px;
   height: 200px;
-  perspective: 600px;
-  position: fixed; /* Keep it on the screen */
+  perspective: 800px;
+  position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 99;
+  cursor: grab;
+}
+
+.scene:active {
+  cursor: grabbing;
 }
 
 .cube {
@@ -188,24 +194,27 @@ main {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  animation: rotateCube 20s linear infinite;
-  cursor: pointer;
+  /* The auto-rotation animation is now permanent */
+  animation: rotateCube 25s linear infinite;
 }
 
 .cube__face {
   position: absolute;
   width: 200px;
   height: 200px;
-  background: rgba(137, 207, 240, 0.8); /* Semi-transparent sky blue */
-  border: 2px solid white;
+  /* New transparent style WITHOUT the blur */
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 20px;
   font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 3px black;
+  color: #85e085; /* "accepted" green text color */
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+  backface-visibility: hidden;
 }
 
 .cube__face--front  { transform: rotateY(  0deg) translateZ(100px); }
@@ -216,6 +225,6 @@ main {
 .cube__face--bottom { transform: rotateX(-90deg) translateZ(100px); }
 
 @keyframes rotateCube {
-  from { transform: rotateY(0deg) rotateX(0deg); }
-  to { transform: rotateY(360deg) rotateX(360deg); }
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
 }

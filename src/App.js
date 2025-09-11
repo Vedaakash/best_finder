@@ -179,6 +179,39 @@ const ContestModal = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
+const InvitationModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      {/* This adds the confetti blast */}
+    {isOpen && <Confetti />}
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-center">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">🎁 Invite Friends & Get Rewards!</h2>
+        <p className="text-gray-600 mb-6">Share your unique code and earn free stuff when your friends sign up.</p>
+        
+        <div className="space-y-4 text-left">
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold text-lg">Invite 5 Friends</h3>
+            <p className="text-green-600">Get 1 Month Subscription FREE!</p>
+          </div>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold text-lg">Invite 10 Friends</h3>
+            <p className="text-green-600">Get 1kg Guavas OR 1 Dozen Bananas + 1 Month FREE!</p>
+          </div>
+        </div>
+        
+        <p className="text-lg font-bold my-4">Your Invite Code: <span className="text-purple-600 bg-purple-100 px-2 py-1 rounded">VEDA2025</span></p>
+
+        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg">
+          Share Your Code
+        </button>
+      </div>
+    </div>
+  );
+};
 const AuthModal = ({ type, isOpen, onClose, handleAuth, authError }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -452,24 +485,92 @@ const GameModal = React.forwardRef(({ isOpen, onClose }, ref) => {
 });
 
 // In src/App.js, add this new component
-const OfferCube = ({ setContestModalOpen }) => {
+// In src/App.js, replace the old OfferCube component with this
+
+// In src/App.js, replace the old OfferCube component with this
+
+const OfferCube = ({ setContestModalOpen, setInvitationModalOpen }) => {
+  // State for the cube's position on the screen
+  const [position, setPosition] = useState({ x: 20, y: 20 }); // right, bottom
+  // State to track if the user is currently dragging
+  const [isMoving, setIsMoving] = useState(false);
+
+  const prevMousePos = React.useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e) => {
+    setIsMoving(true);
+    prevMousePos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMoving) return;
+    const deltaX = e.clientX - prevMousePos.current.x;
+    const deltaY = e.clientY - prevMousePos.current.y;
+
+    // Update position based on mouse movement
+    setPosition(prev => ({
+      x: prev.x - deltaX,
+      y: prev.y - deltaY,
+    }));
+
+    prevMousePos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = () => {
+    setIsMoving(false);
+  };
+
+  useEffect(() => {
+    // We add listeners to the whole window for smooth dragging
+    if (isMoving) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isMoving]);
+
+  const openContest = () => {
+    if (!isMoving) {
+      setContestModalOpen(true);
+    }
+  };
+   const openInvitation = () => {
+    if (!isMoving) {
+      setInvitationModalOpen(true);
+    }
+  };
+
   return (
-    <div className="scene">
+    <div 
+      className="scene" 
+      onMouseDown={handleMouseDown}
+      // The style now controls the position on the screen
+      style={{ bottom: `${position.y}px`, right: `${position.x}px` }}
+    >
       <div className="cube">
-        <div className="cube__face cube__face--front" onClick={() => setContestModalOpen(true)}>
-          🏆 Weekly Contest! Click to see rewards!
-        </div>
-        <div className="cube__face cube__face--back">
-          🎁 Invite friends & get free stuff!
-        </div>
-        <div className="cube__face cube__face--right">
-          <h3>FreshPricer</h3>
-        </div>
-        <div className="cube__face cube__face--left">
-          <h3>Veggies & Fruits</h3>
-        </div>
-        <div className="cube__face cube__face--top"></div>
-        <div className="cube__face cube__face--bottom"></div>
+        {/* We only allow clicking if the user is not in the middle of a drag */}
+        <div className="cube__face cube__face--front" onClick={openContest}>
+  🏆 Weekly Contest! Click to open.
+</div>
+<div className="cube__face cube__face--back" onClick={openContest}>
+  🏆 Weekly Contest! Click to open.
+</div>
+<div className="cube__face cube__face--right" onClick={openInvitation}>
+   🎁 Invite friends & get free stuff!
+</div>
+<div className="cube__face cube__face--left" onClick={openInvitation}>
+   🎁 Invite friends & get free stuff!
+</div>
+<div className="cube__face cube__face--top" onClick={openContest}>
+  🏆 Weekly Contest! Click to open.
+</div>
+<div className="cube__face cube__face--bottom" onClick={openInvitation}>
+   🎁 Invite friends & get free stuff!
+</div>
       </div>
     </div>
   );
@@ -700,6 +801,7 @@ export default function App() {
     const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   const [shopToRate, setShopToRate] = useState(null);
   const [isGameModalOpen, setGameModalOpen] = useState(false);
+  const [isInvitationModalOpen, setInvitationModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [isContestModalOpen, setContestModalOpen] = useState(false);
 const gameModalRef = React.useRef(null);
@@ -763,11 +865,33 @@ const gameModalRef = React.useRef(null);
     ]},
     { id: 8, name: 'Banana', shops: [ 
       { name: 'Daily Needs Grocery', price: '₹40/dozen', distance: '2.5km', city: 'Kanpur', rating: 4.1, reviews: 112 }, 
-      { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km', city: 'Varanasi', rating: 4.3, reviews: 89 } 
+      { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km', city: 'Varanasi', rating: 4.3, reviews: 89 },
+      { name: 'Fruit Junction', price: '₹50/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
+      { name: 'Farm veggie', price: '₹42/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
     ]},
     { id: 9, name: 'Orange', shops: [ 
-      { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 } 
-    ]}
+      { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 },
+      { name: 'Fruit Junction', price: '₹75/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
+      { name: 'Farm veggie', price: '₹72/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
+    ]},
+     { id: 4, name: 'chilli', shops: [ 
+      { name: 'Farm Fresh', price: '₹130/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 },
+      { name: 'Fruit Junction', price: '125/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
+      { name: 'Farm veggie', price: '₹135/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
+    ]},
+    { id: 5, name: 'spinach', shops: [
+      { name: 'Farm Fresh', price: '₹15/bundle', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
+      { name: 'Organic World', price: '₹20/bundle', distance: '3.1km', city: 'Lucknow', rating: 4.6, reviews: 95 },
+      { name: 'Fresh Veggies Co.', price: '₹10/bundle', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
+      { name: 'Varanasi Veggies', price: '₹12/bundle', distance: '2.2km', city: 'Varanasi', rating: 4.7, reviews: 180 },
+    ]},
+    { id: 6, name: 'carrot', shops: [
+      { name: 'Fresh Veggies Co.', price: '₹20/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
+      { name: 'Farm Fresh', price: '₹18/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
+      { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
+      { name: 'Kanpur Mandi', price: '₹24/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
+    ]},
+      
   ];
   
   const [db, setDb] = useState(initialDb);
@@ -876,9 +1000,10 @@ const handleItemClickSearch = (itemName) => {
           ref={gameModalRef}
 
           />
-<OfferCube setContestModalOpen={setContestModalOpen} />
+<OfferCube setContestModalOpen={setContestModalOpen} setInvitationModalOpen={setInvitationModalOpen} />
 <SubscriptionModal isOpen={isSubscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} />
       <ContestModal isOpen={isContestModalOpen} onClose={() => setContestModalOpen(false)} />
+        <InvitationModal isOpen={isInvitationModalOpen} onClose={() => setInvitationModalOpen(false)} />
  
         </div>
     );
