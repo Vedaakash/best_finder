@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Confetti from 'react-confetti';
 import logo from './images/logo.jpg';
 import tomatoimg from './images/fresh tomato';
 import potatoimg from './images/potato';
@@ -136,6 +137,8 @@ const ContestModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      {/* This will create a confetti blast when the modal is open */}
+      {isOpen && <Confetti />}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
         <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Weekly Veggie Catcher Contest</h2>
@@ -148,15 +151,15 @@ const ContestModal = ({ isOpen, onClose }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
           <div className="bg-gray-100 p-4 rounded-lg">
             <h3 className="font-bold">Top 10 Ranks</h3>
-            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top10}</p>
+            <p className="text-green-600 font-semibold">Win Items worth ₹{rewards.top10}</p>
           </div>
           <div className="bg-gray-100 p-4 rounded-lg">
             <h3 className="font-bold">Ranks 11-100</h3>
-            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top100}</p>
+            <p className="text-green-600 font-semibold">Win Items worth ₹{rewards.top100}</p>
           </div>
           <div className="bg-gray-100 p-4 rounded-lg">
             <h3 className="font-bold">Ranks 101-200</h3>
-            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top200}</p>
+            <p className="text-green-600 font-semibold">Win Items worth ₹{rewards.top200}</p>
           </div>
         </div>
 
@@ -447,6 +450,30 @@ const GameModal = React.forwardRef(({ isOpen, onClose }, ref) => {
     </div>
   );
 });
+
+// In src/App.js, add this new component
+const OfferCube = ({ setContestModalOpen }) => {
+  return (
+    <div className="scene">
+      <div className="cube">
+        <div className="cube__face cube__face--front" onClick={() => setContestModalOpen(true)}>
+          🏆 Weekly Contest! Click to see rewards!
+        </div>
+        <div className="cube__face cube__face--back">
+          🎁 Invite friends & get free stuff!
+        </div>
+        <div className="cube__face cube__face--right">
+          <h3>FreshPricer</h3>
+        </div>
+        <div className="cube__face cube__face--left">
+          <h3>Veggies & Fruits</h3>
+        </div>
+        <div className="cube__face cube__face--top"></div>
+        <div className="cube__face cube__face--bottom"></div>
+      </div>
+    </div>
+  );
+};
 const FeaturedItems = ({ handleItemClickSearch }) => {
     const items = [
         { name: 'Tomato', image: tomatoimg },
@@ -849,6 +876,7 @@ const handleItemClickSearch = (itemName) => {
           ref={gameModalRef}
 
           />
+<OfferCube setContestModalOpen={setContestModalOpen} />
 <SubscriptionModal isOpen={isSubscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} />
       <ContestModal isOpen={isContestModalOpen} onClose={() => setContestModalOpen(false)} />
  
