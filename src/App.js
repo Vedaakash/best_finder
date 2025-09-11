@@ -32,7 +32,7 @@ const XIcon = () => (
 
 // --- UI Components ---
 
-const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen }) => (
+const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => (
     <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
@@ -75,6 +75,13 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
       Play Game 🎮
     </button>
 
+     <button 
+      onClick={() => setSubscriptionModalOpen(true)}
+      className="bg-yellow-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-600"
+    >
+      Subscribe
+    </button>
+
                 </div>
                 <div className="flex items-center space-x-4">
                     {user ? (
@@ -93,7 +100,82 @@ const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignu
         </div>
     </nav>
 );
+// In src/App.js, add these two new components
 
+const SubscriptionModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-center">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Get Your Subscription</h2>
+        <p className="text-gray-600 mb-2">Get full access to all features and be eligible for weekly game contests!</p>
+        <p className="text-lg font-bold text-green-600 mb-6">First month is FREE, then only ₹10/month.</p>
+        <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">
+          Subscribe Now (First Month Free)
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const ContestModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  const rewards = {
+    top10: 150,
+    top100: 80,
+    top200: 60,
+  };
+  const items = [
+    { name: '1kg Mangoes', price: 60 }, { name: '1kg Tomatoes', price: 25 },
+    { name: '1kg Carrots', price: 25 }, { name: '1 Spinach Bundle', price: 10 },
+    { name: '1 Curry Leaves', price: 5 }, { name: '1 Watermelon', price: 40 },
+    { name: '1 Dozen Bananas', price: 50 }, { name: '1kg Onions', price: 30 }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Weekly Veggie Catcher Contest</h2>
+        
+        <div className="text-center mb-6">
+          <p className="text-gray-700">Play the game, get the highest score, and win fresh produce!</p>
+          <p className="text-sm text-gray-500">(Subscription required to participate)</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold">Top 10 Ranks</h3>
+            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top10}</p>
+          </div>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold">Ranks 11-100</h3>
+            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top100}</p>
+          </div>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold">Ranks 101-200</h3>
+            <p className="text-green-600 font-semibold">Win Items up to ₹{rewards.top200}</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h4 className="font-bold text-center mb-2">Choose Your Reward Items</h4>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {items.map(item => (
+              <span key={item.name} className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-sm">{item.name} - ₹{item.price}</span>
+            ))}
+          </div>
+        </div>
+
+        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg">
+          Pay ₹20 Entry Fee & Play
+        </button>
+      </div>
+    </div>
+  );
+};
 const AuthModal = ({ type, isOpen, onClose, handleAuth, authError }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -591,7 +673,10 @@ export default function App() {
     const [isRatingModalOpen, setRatingModalOpen] = useState(false);
   const [shopToRate, setShopToRate] = useState(null);
   const [isGameModalOpen, setGameModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [isContestModalOpen, setContestModalOpen] = useState(false);
 const gameModalRef = React.useRef(null);
+
   // ...
   
   // Add this new handler function
@@ -740,29 +825,33 @@ const handleItemClickSearch = (itemName) => {
     };
   
     return (
-        <div className="font-sans">
-          <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} />
-          <main>
-              {renderPage()}
-          </main>
-          
-          {/* This is the single, correct placement for your Footer */}
-          <Footer/>
+  <div className="font-sans">
+   <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} setSubscriptionModalOpen={setSubscriptionModalOpen} />
+   <main>
+       {renderPage()}
+   </main>
+   
+         {/* This is the single, correct placement for your Footer */}
+    <Footer/>
 
-          {/* All your modals will now correctly appear over the main content and footer */}
-          <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
-          <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
-          <RatingModal 
-            isOpen={isRatingModalOpen} 
-            onClose={() => setRatingModalOpen(false)} 
-            shop={shopToRate}
-            onSubmit={handleReviewSubmit}
-          />
-          <GameModal 
+         {/* All your modals will now correctly appear over the main content and footer */}
+  <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
+  <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />
+  <RatingModal 
+    isOpen={isRatingModalOpen} 
+    onClose={() => setRatingModalOpen(false)} 
+    shop={shopToRate}
+    onSubmit={handleReviewSubmit}
+  />
+  <GameModal 
             isOpen={isGameModalOpen} 
             onClose={() => setGameModalOpen(false)}
-            ref={gameModalRef}
+          ref={gameModalRef}
+
           />
+<SubscriptionModal isOpen={isSubscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} />
+      <ContestModal isOpen={isContestModalOpen} onClose={() => setContestModalOpen(false)} />
+ 
         </div>
     );
 }
