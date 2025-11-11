@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Confetti from 'react-confetti';
 import logo from './images/logo.jpg';
 import tomatoimg from './images/fresh tomato';
@@ -30,14 +30,32 @@ const LocationIcon = () => (
 const XIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
 );
+// --- PASTE THIS NEW HELPER FUNCTION NEAR THE TOP ---
+const useWindowSize = () => {
+  const [size, setSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+  useEffect(() => {
+    const handleResize = () => {
+      setSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return size;
+};
 
 // --- UI Components ---
 
-const Navbar = ({ page, setPage, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => (
-    <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
+const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => (
+      <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-                <div className="flex items-center cursor-pointer" onClick={() => setPage('home')}>
+                <div className="flex items-center cursor-pointer" onClick={handleHomeClick}>
     <img src={logo} alt="freshpricer logo" className="h-16 w-auto mr-2"/>
     <span className="font-bold text-2xl text-green-600"><h1><b>FreshPricer</b></h1></span>
 </div>
@@ -122,6 +140,7 @@ const SubscriptionModal = ({ isOpen, onClose }) => {
 };
 
 const ContestModal = ({ isOpen, onClose }) => {
+  const { width, height } = useWindowSize();
   if (!isOpen) return null;
   const rewards = {
     top10: 150,
@@ -138,7 +157,7 @@ const ContestModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
       {/* This will create a confetti blast when the modal is open */}
-      {isOpen && <Confetti />}
+      {isOpen && <Confetti width={width} height={height} />}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
         <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Weekly Veggie Catcher Contest</h2>
@@ -181,12 +200,13 @@ const ContestModal = ({ isOpen, onClose }) => {
 };
 
 const InvitationModal = ({ isOpen, onClose }) => {
+  const { width, height } = useWindowSize();
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
       {/* This adds the confetti blast */}
-    {isOpen && <Confetti />}
+    {isOpen && <Confetti width={width} height={height} />}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative text-center">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><XIcon /></button>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">🎁 Invite Friends & Get Rewards!</h2>
@@ -280,11 +300,7 @@ const RatingModal = ({ isOpen, onClose, shop, onSubmit }) => {
   );
 };
 
-// In src/App.js, replace your old GameModal with this new version
-
-// In src/App.js, replace your old GameModal with this new, high-performance version
-
-// In src/App.js, replace your old GameModal with this new, final version
+  
 
 // In src/App.js, replace your GameModal with this final version
 
@@ -301,9 +317,9 @@ const GameModal = React.forwardRef(({ isOpen, onClose }, ref) => {
   const [lives, setLives] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [milestoneMessage, setMilestoneMessage] = useState('');
-  const lastMilestone = React.useRef(0);
+  const lastMilestone = useRef(0);
   const spawnCooldown = Math.max(200, 800 - score);
-  const lastSpawnTime = React.useRef(0);
+  const lastSpawnTime = useRef(0);
 
   // --- State for Custom Game Settings ---
   const [customTime, setCustomTime] = useState(180); // Default 3 minutes (180s)
@@ -339,7 +355,7 @@ const GameModal = React.forwardRef(({ isOpen, onClose }, ref) => {
       }
     }, 1000 / 60);
     return () => clearInterval(gameInterval);
-  }, [gameState, score]);
+  }, [gameState, score, spawnCooldown]);
 
   // Handle Collisions
   useEffect(() => {
@@ -497,43 +513,46 @@ const OfferCube = ({ setContestModalOpen, setInvitationModalOpen }) => {
 
   const prevMousePos = React.useRef({ x: 0, y: 0 });
 
+
+
+  // --- PASTE THE NEW FUNCTIONS HERE ---
+const handleMouseMove = useCallback((e) => {
+    if (!isMoving) return;
+    const deltaX = e.clientX - prevMousePos.current.x;
+    const deltaY = e.clientY - prevMousePos.current.y;
+    setPosition(prev => ({
+      x: prev.x - deltaX,
+      y: prev.y - deltaY,
+    }));
+    prevMousePos.current = { x: e.clientX, y: e.clientY };
+}, [isMoving]);
+
+const handleMouseUp = useCallback(() => {
+    setIsMoving(false);
+}, []);
+
+
+useEffect(() => {
+  if (isMoving) {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
+  return () => {
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  };
+}, [isMoving, handleMouseMove, handleMouseUp]);
+
   const handleMouseDown = (e) => {
     setIsMoving(true);
     prevMousePos.current = { x: e.clientX, y: e.clientY };
   };
 
-  const handleMouseMove = (e) => {
-    if (!isMoving) return;
-    const deltaX = e.clientX - prevMousePos.current.x;
-    const deltaY = e.clientY - prevMousePos.current.y;
+  
+ 
+   
 
-    // Update position based on mouse movement
-    setPosition(prev => ({
-      x: prev.x - deltaX,
-      y: prev.y - deltaY,
-    }));
-
-    prevMousePos.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseUp = () => {
-    setIsMoving(false);
-  };
-
-  useEffect(() => {
-    // We add listeners to the whole window for smooth dragging
-    if (isMoving) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isMoving]);
-
-  const openContest = () => {
+    const openContest = () => {
     if (!isMoving) {
       setContestModalOpen(true);
     }
@@ -587,14 +606,117 @@ const FeaturedItems = ({ handleItemClickSearch }) => {
         { name: 'Spinach', image: spinachimg },
         { name: 'Chilli', image: mirchiimg }
     ];
+    // --- ADD THIS ENTIRE BLOCK ---
+
+const trackRef = useRef(null);
+const [translateX, setTranslateX] = useState(0);
+
+// Refs to manage drag state and animation
+const isDraggingRef = useRef(false);
+const startXRef = useRef(0);
+const scrollStartRef = useRef(0);
+const animationFrameIdRef = useRef(null);
+const scrollWidthRef = useRef(0);
+
+// --- Auto-scroll logic ---
+const startAutoScroll = useCallback(() => {
+  if (animationFrameIdRef.current) {
+    cancelAnimationFrame(animationFrameIdRef.current);
+  }
+
+  const scrollStep = 0.5; // Adjust scroll speed here
+
+  const loop = () => {
+    if (!isDraggingRef.current) {
+      setTranslateX(prev => {
+        let newX = prev - scrollStep;
+        // Loop back to the start
+        if (newX < -scrollWidthRef.current) {
+          newX += scrollWidthRef.current;
+        }
+        return newX;
+      });
+    }
+    animationFrameIdRef.current = requestAnimationFrame(loop);
+  };
+
+  animationFrameIdRef.current = requestAnimationFrame(loop);
+}, []); // This function is stable
+
+// --- Mouse drag handlers ---
+const handleMouseDown = useCallback((e) => {
+  isDraggingRef.current = true;
+  // Store the starting X position and initial translation
+  startXRef.current = e.pageX;
+  scrollStartRef.current = translateX;
+  // Stop the auto-scroll animation
+  cancelAnimationFrame(animationFrameIdRef.current);
+}, [translateX]);
+
+const handleMouseUp = useCallback(() => {
+  isDraggingRef.current = false;
+  // Restart the auto-scroll
+  startAutoScroll();
+}, [startAutoScroll]);
+
+const handleMouseLeave = useCallback(() => {
+  isDraggingRef.current = false;
+  // Restart the auto-scroll
+  startAutoScroll();
+}, [startAutoScroll]);
+
+const handleMouseMove = useCallback((e) => {
+  if (!isDraggingRef.current) return;
+  e.preventDefault();
+
+  const x = e.pageX;
+  const walk = x - startXRef.current; // How far the mouse has moved
+  let newTranslateX = scrollStartRef.current + walk;
+
+  // Infinite loop logic
+  const loopWidth = scrollWidthRef.current;
+  if (loopWidth > 0) {
+     // Use modulo to wrap the translation
+     newTranslateX = newTranslateX % loopWidth;
+     if (newTranslateX > 0) {
+        newTranslateX -= loopWidth; // Ensure we're always in the negative
+     }
+  }
+
+  setTranslateX(newTranslateX);
+}, []); // All values are from refs, so this is stable
+
+// --- Effect to start the animation ---
+useEffect(() => {
+  if (trackRef.current) {
+    // We have 3 copies of the items, so the loop width is 1/3 of the total width
+    scrollWidthRef.current = trackRef.current.scrollWidth / 3;
+  }
+  startAutoScroll();
+  // Cleanup on unmount
+  return () => cancelAnimationFrame(animationFrameIdRef.current);
+}, [startAutoScroll]);
+
+// --- END OF BLOCK TO ADD ---
 
     return (
-        <div className="w-full py-12">
-            <h2 className="text-2xl font-bold text-gray-800 text-center mb-6 mt-16">Or Click to Search Popular Items</h2>
+        <div className="w-full">
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-1 mt-1">Or Click to Search Popular Items</h2>
             
             <div className="floating-container">
                 <div className="water"></div>
-                <div className="bubble-track">
+                <div 
+  className="bubble-track"
+  ref={trackRef}
+  style={{
+    transform: `translateX(${translateX}px)`,
+    willChange: 'transform', // Performance optimization
+  }}
+  onMouseDown={handleMouseDown}
+  onMouseUp={handleMouseUp}
+  onMouseLeave={handleMouseLeave}
+  onMouseMove={handleMouseMove}
+>
                     {/* We duplicate the list 3 times for a perfectly seamless loop */}
                     {[...items, ...items, ...items].map((item, index) => (
                         <div 
@@ -614,8 +736,8 @@ const FeaturedItems = ({ handleItemClickSearch }) => {
     );
 };
 
-const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTerm, handleItemClickSearch }) => (
-    <div className="min-h-screen flex flex-col items-center justify-center pt-16 overflow-hidden">
+ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTerm }) => (
+    <div className="flex flex-col items-center pt-24 pb-16 overflow-hidden">
         <div className="text-center p-8 max-w-4xl mx-auto w-full">
             <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-4 animate-fade-in-down main-heading">
                 Find the <span className="text-green-300">Best</span> Prices
@@ -632,7 +754,7 @@ const HomePage = ({ handleSearch, location, setLocation, searchTerm, setSearchTe
                 </form>
             </div>
         </div>
-        <FeaturedItems handleItemClickSearch={handleItemClickSearch} />
+         
     </div>
 );
 
@@ -738,7 +860,7 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
           </div>
         )}
       </div>
-      <button onClick={() => setPage('home')} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
+      <button onClick={handleHomeClick} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
         Back to Home
       </button>
     </div>
@@ -746,32 +868,36 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
 };
 
 const AboutPage = () => (
-     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-         <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
-               <h1 className="text-4xl font-extrabold text-gray-900 text-center">About freshpricer</h1>
-               <p className="mt-4 text-lg text-gray-600 text-center">Our mission is to bring transparency to local markets, helping you find the freshest produce at the best prices.</p>
+     <div className="pt-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
+                <h1 className="text-4xl font-extrabold text-gray-900 text-center">About FreshPricer</h1>
+                <p className="mt-4 text-lg text-gray-600 text-center">Our mission is to bring transparency to local markets, helping you find the freshest produce at the best prices.</p>
               <div className="mt-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Meet the Creator</h2>
-                <p className="text-gray-700 mb-4 text-center">My name is <span className="font-bold">Veda Akash</span>, and I'm a passionate developer dedicated to building tools that solve real-world problems. freshpricer was born from a simple idea: what if you could know the price of vegetables at different local shops before you even left the house?</p>
-                <p className="text-gray-700 text-center">This project combines my love for technology with a desire to help my community make smarter, healthier choices. I hope you find it useful!</p>
+                   <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">Meet the Creator</h2>
+                   <p className="text-gray-700 mb-4 text-center">My name is <span className="font-bold">Veda Akash</span>, and I'm a passionate developer dedicated to building tools that solve real-world problems. FreshPricer was born from a simple idea: what if you could know the price of vegetables at different local shops before you even left the house?</p>
+                   <p className="text-gray-700 text-center">This project combines my love for technology with a desire to help my community make smarter, healthier choices. I hope you find it useful!</p>
               </div>
          </div>
      </div>
 );
 
 const ContactPage = () => (
-     <div className="min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
-         <div className="max-w-4xl mx-auto text-center bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
-               <h1 className="text-4xl font-extrabold text-gray-900">Get In Touch</h1>
-               <p className="mt-4 text-lg text-gray-600">Have questions, suggestions, or feedback? I'd love to hear from you!</p>
-         </div>
+     <div className="pt-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center bg-white/80 backdrop-blur-md p-10 rounded-2xl shadow-lg">
+                <h1 className="text-4xl font-extrabold text-gray-900">Get In Touch</h1>
+                <p className="mt-4 text-lg text-gray-600">Have questions, suggestions, or feedback? I'd love to hear from you!</p>
+                <div className="mt-6">
+                    <a href="mailto:vedaakashyendluri@gmail.com" className="text-xl text-sky-500 hover:text-sky-700 font-semibold">
+                        vedaakashyendluri@gmail.com
+                    </a>
+                </div>
+          </div>
      </div>
 );
-
  // This is the NEW code for the Footer component
 
 const Footer = () => (
-    <footer className="bg-gray-900 text-white pt-12 pb-8 mt-16 w-full">
+    <footer className="bg-gray-900 text-white pt-12 pb-8  w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h3 className="text-2xl font-bold mb-2">Get In Touch</h3>
             <p className="text-gray-400 mb-6">Have questions or feedback? I'd love to hear from you.</p>
@@ -783,7 +909,7 @@ const Footer = () => (
                 <p className="text-gray-300">Ahmamau, Uttar Pradesh, India</p>
             </div>
             <div className="border-t border-gray-700 pt-6">
-                <p className="text-gray-500 text-sm">&copy; 2024 VeggieFinder by Veda Akash. All Rights Reserved.</p>
+                <p className="text-gray-500 text-sm">&copy; 2025 VeggieFinder by Veda Akash. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
@@ -804,7 +930,7 @@ export default function App() {
   const [isInvitationModalOpen, setInvitationModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [isContestModalOpen, setContestModalOpen] = useState(false);
-const gameModalRef = React.useRef(null);
+const gameModalRef = useRef(null);
 
   // ...
   
@@ -976,15 +1102,19 @@ const handleItemClickSearch = (itemName) => {
     };
   
     return (
-  <div className="font-sans">
-   <Navbar page={page} setPage={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} setSubscriptionModalOpen={setSubscriptionModalOpen} />
-   <main>
-       {renderPage()}
-   </main>
-   
-         {/* This is the single, correct placement for your Footer */}
-    <Footer/>
+  <div className="font-sans min-h-screen flex flex-col">
+   <Navbar page={page} setPage={setPage} handleHomeClick={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} setSubscriptionModalOpen={setSubscriptionModalOpen} />
+   <main className="flex-grow">
+  {renderPage()}
+</main>
 
+{/* This block ensures the water *only* shows on the home page */}
+{page === 'home' && (
+    <FeaturedItems handleItemClickSearch={handleItemClickSearch} />
+)}
+
+
+<Footer/>
          {/* All your modals will now correctly appear over the main content and footer */}
   <AuthModal type="login" isOpen={isLoginModalOpen} onClose={() => { setLoginModalOpen(false); setAuthError(null); }} handleAuth={handleLogin} authError={authError} />
   <AuthModal type="signup" isOpen={isSignupModalOpen} onClose={() => { setSignupModalOpen(false); setAuthError(null); }} handleAuth={handleSignup} authError={authError} />

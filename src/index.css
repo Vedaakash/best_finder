@@ -105,7 +105,18 @@ body {
 .bubble-track {
   display: flex;
   width: 250%; 
-  animation: horizontal-scroll 40s linear infinite;
+  cursor:grab;
+}
+/* --- ADD THESE NEW RULES --- */
+.bubble-track:active {
+  cursor: grabbing;
+}
+
+.bubble,
+.bubble img,
+.bubble .label {
+  -webkit-user-select: none;
+  user-select: none; /* Prevents selecting text/images while dragging */
 }
 
 @keyframes horizontal-scroll {
@@ -158,19 +169,7 @@ body {
 }
 
 /* Add these styles to make the footer stick to the bottom */
-html, body, #root, .font-sans {
-  height: 100%;
-}
-
-.font-sans {
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex-grow: 1;
-}
-
+ 
 
 /* --- REPLACE YOUR OLD CUBE CSS WITH THIS NEW BLOCK --- */
 

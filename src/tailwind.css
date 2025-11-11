@@ -624,6 +624,10 @@ video {
   margin-bottom: 1rem;
 }
 
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
 .mb-12 {
   margin-bottom: 3rem;
 }
@@ -664,16 +668,16 @@ video {
   margin-top: 3rem;
 }
 
-.mt-16 {
-  margin-top: 4rem;
-}
-
 .mt-2 {
   margin-top: 0.5rem;
 }
 
 .mt-4 {
   margin-top: 1rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
 }
 
 .mt-8 {
@@ -752,12 +756,20 @@ video {
   max-width: 24rem;
 }
 
+.flex-grow {
+  flex-grow: 1;
+}
+
 .transform {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.resize {
+  resize: both;
 }
 
 .appearance-none {
@@ -829,6 +841,10 @@ video {
   overflow: hidden;
 }
 
+.rounded {
+  border-radius: 0.25rem;
+}
+
 .rounded-2xl {
   border-radius: 1rem;
 }
@@ -843,10 +859,6 @@ video {
 
 .rounded-md {
   border-radius: 0.375rem;
-}
-
-.rounded {
-  border-radius: 0.25rem;
 }
 
 .border {
@@ -914,6 +926,11 @@ video {
   background-color: rgb(22 163 74 / var(--tw-bg-opacity, 1));
 }
 
+.bg-purple-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 232 255 / var(--tw-bg-opacity, 1));
+}
+
 .bg-purple-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(168 85 247 / var(--tw-bg-opacity, 1));
@@ -957,11 +974,6 @@ video {
 .bg-yellow-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(234 179 8 / var(--tw-bg-opacity, 1));
-}
-
-.bg-purple-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(243 232 255 / var(--tw-bg-opacity, 1));
 }
 
 .bg-gradient-to-b {
@@ -1028,11 +1040,6 @@ video {
   padding-bottom: 0.25rem;
 }
 
-.py-12 {
-  padding-top: 3rem;
-  padding-bottom: 3rem;
-}
-
 .py-16 {
   padding-top: 4rem;
   padding-bottom: 4rem;
@@ -1053,6 +1060,10 @@ video {
   padding-bottom: 1rem;
 }
 
+.pb-16 {
+  padding-bottom: 4rem;
+}
+
 .pb-8 {
   padding-bottom: 2rem;
 }
@@ -1067,10 +1078,6 @@ video {
 
 .pt-12 {
   padding-top: 3rem;
-}
-
-.pt-16 {
-  padding-top: 4rem;
 }
 
 .pt-24 {
@@ -1213,6 +1220,11 @@ video {
   color: rgb(22 163 74 / var(--tw-text-opacity, 1));
 }
 
+.text-purple-600 {
+  --tw-text-opacity: 1;
+  color: rgb(147 51 234 / var(--tw-text-opacity, 1));
+}
+
 .text-red-500 {
   --tw-text-opacity: 1;
   color: rgb(239 68 68 / var(--tw-text-opacity, 1));
@@ -1221,6 +1233,11 @@ video {
 .text-sky-400 {
   --tw-text-opacity: 1;
   color: rgb(56 189 248 / var(--tw-text-opacity, 1));
+}
+
+.text-sky-500 {
+  --tw-text-opacity: 1;
+  color: rgb(14 165 233 / var(--tw-text-opacity, 1));
 }
 
 .text-white {
@@ -1240,11 +1257,6 @@ video {
 .text-yellow-500 {
   --tw-text-opacity: 1;
   color: rgb(234 179 8 / var(--tw-text-opacity, 1));
-}
-
-.text-purple-600 {
-  --tw-text-opacity: 1;
-  color: rgb(147 51 234 / var(--tw-text-opacity, 1));
 }
 
 .shadow-2xl {
@@ -1427,7 +1439,21 @@ body {
 .bubble-track {
   display: flex;
   width: 250%;
-  animation: horizontal-scroll 40s linear infinite;
+  cursor:grab;
+}
+
+/* --- ADD THESE NEW RULES --- */
+
+.bubble-track:active {
+  cursor: grabbing;
+}
+
+.bubble,
+.bubble img,
+.bubble .label {
+  -webkit-user-select: none;
+  user-select: none;
+  /* Prevents selecting text/images while dragging */
 }
 
 @keyframes horizontal-scroll {
@@ -1499,19 +1525,6 @@ body {
 }
 
 /* Add these styles to make the footer stick to the bottom */
-
-html, body, #root, .font-sans {
-  height: 100%;
-}
-
-.font-sans {
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  flex-grow: 1;
-}
 
 /* --- REPLACE YOUR OLD CUBE CSS WITH THIS NEW BLOCK --- */
 
@@ -1658,6 +1671,11 @@ main {
 .hover\:text-sky-300:hover {
   --tw-text-opacity: 1;
   color: rgb(125 211 252 / var(--tw-text-opacity, 1));
+}
+
+.hover\:text-sky-700:hover {
+  --tw-text-opacity: 1;
+  color: rgb(3 105 161 / var(--tw-text-opacity, 1));
 }
 
 .hover\:text-white:hover {
