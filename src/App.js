@@ -1,4 +1,8 @@
  import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+ import { doc, setDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { db as firestoreDb } from "./firebase";
+ import VitaminGuide from './VitaminGuide';
 import Confetti from 'react-confetti';
 import logo from './images/logo.jpg';
 import tomatoimg from './images/fresh tomato';
@@ -49,9 +53,88 @@ const useWindowSize = () => {
   return size;
 };
 
+
+// --- NEW HEALTH DATA KNOWLEDGE BASE (UPDATED) ---
+const ITEM_HEALTH_DATA = {
+  banana: {
+    tagline: "The Natural Stress Buster",
+    stats: [
+      { icon: "😌", text: "Eat 2 Bananas (200g): Reduces anxiety in ~30 mins" },
+      { icon: "⚡", text: "Eat 1 Banana: Gives instant energy for 45 mins work" },
+      { icon: "💓", text: "Daily 250g: High Potassium helps lower High BP" }
+    ],
+    bg: "bg-yellow-50",
+    border: "border-yellow-200"
+  },
+  tomato: {
+    tagline: "Heart & Skin Guardian",
+    stats: [
+      { icon: "❤️", text: "Eat 300g Daily: Lowers bad cholesterol levels" },
+      { icon: "✨", text: "Eat 1 Cup Cooked: Protects skin from sun burn" },
+      { icon: "🩸", text: "Eat 2 Raw: Purifies blood & improves flow" }
+    ],
+    bg: "bg-red-50",
+    border: "border-red-200"
+  },
+  onion: {
+    tagline: "Immunity & Hair Hero",
+    stats: [
+      { icon: "🛡️", text: "Eat 50g Raw: Kills mouth bacteria instantly" },
+      { icon: "💇‍♀️", text: "Apply Juice: Sulfur content stops hair fall" },
+      { icon: "🧊", text: "Eat 1 Raw Onion: Cools body heat in summer" }
+    ],
+    bg: "bg-purple-50",
+    border: "border-purple-200"
+  },
+  potato: {
+    tagline: "Brain & Energy Fuel",
+    stats: [
+      { icon: "🧠", text: "Eat 200g Boiled: Vitamin B6 helps brain focus" },
+      { icon: "⚡", text: "Eat 1 Medium: Quick digestion gives fast energy" },
+      { icon: "🥣", text: "Eat 200g: Keeps stomach full for 4 hours" }
+    ],
+    bg: "bg-yellow-50",
+    border: "border-yellow-200"
+  },
+  spinach: {
+    tagline: "The Iron Powerhouse",
+    stats: [
+      { icon: "🩸", text: "Eat 1 Cup Cooked: Restores Iron levels fast" },
+      { icon: "👀", text: "Drink 1 Glass Juice: Sharpens eye vision" },
+      { icon: "🔋", text: "Eat 100g: Fixes tiredness and fatigue" }
+    ],
+    bg: "bg-green-50",
+    border: "border-green-200"
+  },
+  apple: {
+    tagline: "Doctor's Best Friend",
+    stats: [
+      { icon: "🦷", text: "Eat 1 Whole: Cleans teeth while chewing" },
+      { icon: "📉", text: "Eat 1 Daily: Lowers risk of sugar problems" },
+      { icon: "⚖️", text: "Eat 200g: High fiber helps weight loss" }
+    ],
+    bg: "bg-red-50",
+    border: "border-red-200"
+  },
+  carrot: {
+     tagline: "Vision & Glow Expert",
+     stats: [
+       { icon: "👁️", text: "Drink 1 Glass Juice: Improves night vision" },
+       { icon: "✨", text: "Eat 2 Raw: Gives skin a natural glow" },
+       { icon: "🧡", text: "Eat 100g: Keeps skin looking young" }
+     ],
+     bg: "bg-orange-50",
+     border: "border-orange-200"
+  }
+};
+
+
+
 // --- UI Components ---
 
-const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => (
+const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => {
+  const [showHealthGuide, setShowHealthGuide] = useState(false);
+  return (
       <nav className="bg-white/70 backdrop-blur-lg shadow-sm fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
@@ -94,6 +177,15 @@ const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginMo
       Play Game 🎮
     </button>
 
+    
+<button 
+  onClick={() => setShowHealthGuide(true)}
+  className="bg-emerald-100 text-emerald-700 border border-emerald-300 px-3 py-2 rounded-md text-sm font-bold hover:bg-emerald-200 transition-colors shadow-sm mr-2"
+>
+  💊 Health Guide
+</button>
+
+
      <button 
       onClick={() => setSubscriptionModalOpen(true)}
       className="bg-yellow-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-600"
@@ -117,8 +209,14 @@ const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginMo
                 </div>
             </div>
         </div>
+
+        <VitaminGuide 
+          isOpen={showHealthGuide} 
+          onClose={() => setShowHealthGuide(false)} 
+        />
     </nav>
 );
+};
 // In src/App.js, add these two new components
 
 const SubscriptionModal = ({ isOpen, onClose }) => {
@@ -139,11 +237,64 @@ const SubscriptionModal = ({ isOpen, onClose }) => {
   );
 };
 
+
+// --- NEW COMPONENT: HEALTH POWER CARD ---
+const HealthPowerCard = ({ searchTerm }) => {
+  // 1. Clean the search term (remove spaces, make lowercase)
+  const cleanTerm = searchTerm?.toLowerCase().trim();
+  
+  // 2. Try to find the data directly or partial match
+  // (e.g. if user searches "Fresh Tomato", we still find "tomato")
+  const key = Object.keys(ITEM_HEALTH_DATA).find(k => cleanTerm.includes(k));
+  const data = ITEM_HEALTH_DATA[key];
+
+  // 3. If no data found, return null (don't show anything)
+  if (!data) return null;
+
+  return (
+    <div className={`max-w-4xl mx-auto mb-8 rounded-xl border-l-8 shadow-md overflow-hidden ${data.bg} ${data.border} border-l-green-500 animate-slide-in-up`}>
+      <div className="p-6">
+        <div className="flex items-center mb-4">
+          <span className="text-3xl mr-3">🩺</span>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">
+              Why buy <span className="capitalize text-green-700">{key}</span>?
+            </h3>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+              {data.tagline}
+            </p>
+          </div>
+        </div>
+        
+        {/* The Grid of Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {data.stats.map((stat, index) => (
+            <div key={index} className="flex items-start bg-white/60 p-3 rounded-lg">
+              <span className="text-2xl mr-3">{stat.icon}</span>
+              <p className="text-sm font-medium text-gray-700 leading-tight">
+                {stat.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Bottom strip */}
+      <div className="bg-green-600 text-white text-xs py-1 px-4 text-center font-medium">
+        Verified Health Fact: Eating fresh is 3x better than supplements!
+      </div>
+    </div>
+  );
+};
+
+
+
+
 const ContestModal = ({ isOpen, onClose }) => {
   const { width, height } = useWindowSize();
   if (!isOpen) return null;
   const rewards = {
-    top10: 150,
+    top10: 200,
     top100: 80,
     top200: 60,
   };
@@ -790,7 +941,8 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
         <p className="text-blue-100 sub-heading">Showing prices near {location}</p>
       </div>
 
-      {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
+<HealthPowerCard searchTerm={searchTerm} />
+       <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2 filter-buttons"></div>
       {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
 <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2 filter-buttons">
     <button 
@@ -860,9 +1012,9 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
           </div>
         )}
       </div>
-      <button onClick={handleHomeClick} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
-        Back to Home
-      </button>
+      <button onClick={setPage} className="mt-12 mx-auto block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 shadow-lg transition-all transform hover:scale-105">
+        Back to Home
+      </button>
     </div>
   );
 };
@@ -966,61 +1118,30 @@ const gameModalRef = useRef(null);
 
 
 
-    const initialDb = [
-    { id: 1, name: 'Tomato', shops: [
-      { name: 'Fresh Veggies Co.', price: '₹25/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
-      { name: 'Farm Fresh', price: '₹22/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
-      { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
-      { name: 'Kanpur Mandi', price: '₹24/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
-    ]},
-    { id: 2, name: 'Onion', shops: [
-      { name: 'Farm Fresh', price: '₹30/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
-      { name: 'Organic World', price: '₹35/kg', distance: '3.1km', city: 'Lucknow', rating: 4.6, reviews: 95 },
-      { name: 'Fresh Veggies Co.', price: '₹32/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
-      { name: 'Varanasi Veggies', price: '₹28/kg', distance: '2.2km', city: 'Varanasi', rating: 4.7, reviews: 180 },
-    ]},
-    { id: 3, name: 'Potato', shops: [
-      { name: 'Daily Needs Grocery', price: '₹20/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
-      { name: 'Fresh Veggies Co.', price: '₹18/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
-      { name: 'Kanpur Mandi', price: '₹15/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
-      { name: 'Farm Fresh', price: '₹21/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
-    ]},
-    { id: 7, name: 'Apple', shops: [ 
-      { name: 'Fruit Junction', price: '₹120/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
-      { name: 'Farm Fresh', price: '₹110/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 } 
-    ]},
-    { id: 8, name: 'Banana', shops: [ 
-      { name: 'Daily Needs Grocery', price: '₹40/dozen', distance: '2.5km', city: 'Kanpur', rating: 4.1, reviews: 112 }, 
-      { name: 'Fruit Junction', price: '₹45/dozen', distance: '1.5km', city: 'Varanasi', rating: 4.3, reviews: 89 },
-      { name: 'Fruit Junction', price: '₹50/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
-      { name: 'Farm veggie', price: '₹42/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
-    ]},
-    { id: 9, name: 'Orange', shops: [ 
-      { name: 'Farm Fresh', price: '₹80/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 },
-      { name: 'Fruit Junction', price: '₹75/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
-      { name: 'Farm veggie', price: '₹72/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
-    ]},
-     { id: 4, name: 'chilli', shops: [ 
-      { name: 'Farm Fresh', price: '₹130/kg', distance: '0.8km', city: 'Kanpur', rating: 4.8, reviews: 152 },
-      { name: 'Fruit Junction', price: '125/kg', distance: '1.5km', city: 'Lucknow', rating: 4.9, reviews: 250 }, 
-      { name: 'Farm veggie', price: '₹135/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 }
-    ]},
-    { id: 5, name: 'spinach', shops: [
-      { name: 'Farm Fresh', price: '₹15/bundle', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
-      { name: 'Organic World', price: '₹20/bundle', distance: '3.1km', city: 'Lucknow', rating: 4.6, reviews: 95 },
-      { name: 'Fresh Veggies Co.', price: '₹10/bundle', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
-      { name: 'Varanasi Veggies', price: '₹12/bundle', distance: '2.2km', city: 'Varanasi', rating: 4.7, reviews: 180 },
-    ]},
-    { id: 6, name: 'carrot', shops: [
-      { name: 'Fresh Veggies Co.', price: '₹20/kg', distance: '1.2km', city: 'Lucknow', rating: 4.2, reviews: 88 },
-      { name: 'Farm Fresh', price: '₹18/kg', distance: '0.8km', city: 'Lucknow', rating: 4.8, reviews: 152 },
-      { name: 'Daily Needs Grocery', price: '₹28/kg', distance: '2.5km', city: 'Lucknow', rating: 3.9, reviews: 45 },
-      { name: 'Kanpur Mandi', price: '₹24/kg', distance: '1.5km', city: 'Kanpur', rating: 4.5, reviews: 210 },
-    ]},
-      
-  ];
+     
   
-  const [db, setDb] = useState(initialDb);
+  const [db, setDb] = useState([]);
+
+  // --- REAL-TIME LISTENER CODE ---
+useEffect(() => {
+  // 1. Set up a listener on the 'vegetables' collection
+  const unsubscribe = onSnapshot(collection(firestoreDb, "vegetables"), (snapshot) => {
+    
+    // 2. This code runs EVERY time the database changes
+    const veggies = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    console.log("Database updated, refreshing UI...", veggies);
+    setDb(veggies);
+  }, (error) => {
+    console.error("Error listening to database:", error);
+  });
+
+  // 3. Cleanup: Stop listening when the user leaves the page
+  return () => unsubscribe();
+}, []);
 
     // In the App() component, below your other useEffect
 // In your App() component
@@ -1076,33 +1197,32 @@ const handleItemClickSearch = (itemName) => {
     const handleSignup = async (email, password) => { setAuthError(null); try { await createUserWithEmailAndPassword(auth, email, password); setSignupModalOpen(false); } catch (error) { setAuthError(error.message); } };
     const handleLogin = async (email, password) => { setAuthError(null); try { await signInWithEmailAndPassword(auth, email, password); setLoginModalOpen(false); } catch (error) { setAuthError(error.message); } };
     const handleLogout = async () => { await signOut(auth); };
-
-    const renderPage = () => {
-      switch(page) {
-        case 'home':
-          return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
-        case 'search':
-  return <SearchResultsPage
-    searchTerm={searchTerm} 
-    location={location} 
-    searchResults={searchResults} 
-    setPage={resetSearch}
-    filters={filters}
-    setFilters={setFilters}
-    setShopToRate={setShopToRate}
-    setRatingModalOpen={setRatingModalOpen}
-  />;
-        case 'about':
-          return <AboutPage />;
-        case 'contact':
-          return <ContactPage />;
-        default:
-          return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} handleItemClickSearch={handleItemClickSearch} />;
-      }
-    };
-  
+const renderPage = () => {
+      switch(page) {
+        case 'home':
+          return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+        case 'search':
+  return <SearchResultsPage
+    searchTerm={searchTerm} 
+    location={location} 
+    searchResults={searchResults} 
+    setPage={resetSearch}
+    filters={filters}
+    setFilters={setFilters}
+    setShopToRate={setShopToRate}
+    setRatingModalOpen={setRatingModalOpen}
+  />;
+        case 'about':
+          return <AboutPage />;
+        case 'contact':
+          return <ContactPage />;
+        default:
+          return <HomePage handleSearch={handleSearch} location={location} setLocation={setLocation} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />;
+      }
+    };
     return (
   <div className="font-sans min-h-screen flex flex-col">
+     
    <Navbar page={page} setPage={setPage} handleHomeClick={resetSearch} user={user} handleLogout={handleLogout} setLoginModalOpen={setLoginModalOpen} setSignupModalOpen={setSignupModalOpen} setGameModalOpen={setGameModalOpen} setSubscriptionModalOpen={setSubscriptionModalOpen} />
    <main className="flex-grow">
   {renderPage()}
