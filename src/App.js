@@ -1,6 +1,6 @@
  import React, { useState, useEffect, useRef, useCallback } from 'react';
 
- import { doc, setDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+ import { doc, setDoc, collection, getDoc,updateDoc,arrayUnion, onSnapshot } from "firebase/firestore";
 import { db as firestoreDb } from "./firebase";
  import VitaminGuide from './VitaminGuide';
 import Confetti from 'react-confetti';
@@ -52,7 +52,7 @@ const useWindowSize = () => {
   }, []);
   return size;
 };
-
+ 
 
 // --- NEW HEALTH DATA KNOWLEDGE BASE (UPDATED) ---
 const ITEM_HEALTH_DATA = {
@@ -131,6 +131,8 @@ const ITEM_HEALTH_DATA = {
 
 
 // --- UI Components ---
+
+
 
 const Navbar = ({ page, setPage, handleHomeClick, user, handleLogout, setLoginModalOpen, setSignupModalOpen, setGameModalOpen, setSubscriptionModalOpen }) => {
   const [showHealthGuide, setShowHealthGuide] = useState(false);
@@ -237,8 +239,117 @@ const SubscriptionModal = ({ isOpen, onClose }) => {
   );
 };
 
+// --- COMPONENT: REVIEWS MODAL ---
+// --- COMPONENT: REVIEWS MODAL (FIXED) ---
+const ReviewsModal = ({ shopName, onClose }) => {
+  const [reviews, setReviews] = useState([]);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+  const [userName, setUserName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-// --- NEW COMPONENT: HEALTH POWER CARD ---
+  // 1. Load Reviews for this Shop
+  useEffect(() => {
+    const fetchReviews = async () => {
+      // FIX: Use firestoreDb instead of db
+      const docRef = doc(firestoreDb, "shop_reviews", shopName);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        setReviews(docSnap.data().allReviews || []);
+      } else {
+        setReviews([]); 
+      }
+    };
+    fetchReviews();
+  }, [shopName]);
+
+  // 2. Handle Submit Review
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!userName.trim() || !newComment.trim()) return alert("Please enter your name and comment");
+    setIsSubmitting(true);
+
+    const newReview = {
+      user: userName,
+      rating: newRating,
+      text: newComment,
+      date: new Date().toLocaleDateString()
+    };
+
+    // FIX: Use firestoreDb instead of db
+    const docRef = doc(firestoreDb, "shop_reviews", shopName);
+    
+    await setDoc(docRef, {
+      allReviews: arrayUnion(newReview)
+    }, { merge: true });
+
+    setReviews([...reviews, newReview]);
+    setNewComment("");
+    setUserName("");
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div className="bg-sky-500 p-4 flex justify-between items-center text-white">
+          <h2 className="font-bold text-lg">⭐ Reviews: {shopName}</h2>
+          <button onClick={onClose} className="bg-white/20 px-3 py-1 rounded-lg hover:bg-white/30 text-sm font-bold">Close ✕</button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+          {reviews.length === 0 ? (
+            <div className="text-center text-gray-400 py-8">
+              <p className="text-4xl mb-2">😶</p>
+              <p>No reviews yet.<br/>Be the first to review!</p>
+            </div>
+          ) : (
+            reviews.map((r, i) => (
+              <div key={i} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex justify-between items-start">
+                  <span className="font-bold text-gray-800">{r.user}</span>
+                  <span className="text-yellow-500 font-bold">{"⭐".repeat(r.rating)}</span>
+                </div>
+                <p className="text-gray-600 text-sm mt-1">{r.text}</p>
+                <p className="text-gray-300 text-[10px] text-right mt-1">{r.date}</p>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="p-4 bg-white border-t">
+          <h3 className="font-bold text-gray-700 text-sm mb-2">Write a Review</h3>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input 
+                type="text" placeholder="Your Name" value={userName} 
+                onChange={e => setUserName(e.target.value)}
+                className="flex-1 border-2 border-gray-200 rounded-lg p-2 text-sm font-bold focus:outline-none focus:border-sky-500"
+              />
+              <select 
+                value={newRating} onChange={e => setNewRating(Number(e.target.value))}
+                className="border-2 border-gray-200 rounded-lg p-2 text-sm font-bold focus:outline-none focus:border-sky-500"
+              >
+                <option value="5">5 ⭐</option>
+                <option value="4">4 ⭐</option>
+                <option value="3">3 ⭐</option>
+                <option value="2">2 ⭐</option>
+                <option value="1">1 ⭐</option>
+              </select>
+            </div>
+            <textarea 
+              placeholder="How was the quality?" value={newComment} 
+              onChange={e => setNewComment(e.target.value)}
+              className="border-2 border-gray-200 rounded-lg p-2 text-sm font-bold focus:outline-none focus:border-sky-500 h-20 resize-none"
+            />
+            <button disabled={isSubmitting} className="bg-green-600 text-white py-2 rounded-lg font-bold shadow-md hover:bg-green-700 disabled:opacity-50">
+              {isSubmitting ? "Posting..." : "POST REVIEW"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};// --- NEW COMPONENT: HEALTH POWER CARD ---
 const HealthPowerCard = ({ searchTerm }) => {
   // 1. Clean the search term (remove spaces, make lowercase)
   const cleanTerm = searchTerm?.toLowerCase().trim();
@@ -909,8 +1020,8 @@ useEffect(() => {
     </div>
 );
 
-const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filters, setFilters, setShopToRate, setRatingModalOpen }) => {
-  // Logic to sort the results based on the current sortOrder state
+// Add 'setSelectedShopForReview' to the curly braces:
+const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filters, setFilters, setShopToRate, setRatingModalOpen, setSelectedShopForReview }) => {  // Logic to sort the results based on the current sortOrder state
   const sortedResults = React.useMemo(() => {
     if (!searchResults || searchResults.length === 0) return [];
 
@@ -941,7 +1052,6 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
         <p className="text-blue-100 sub-heading">Showing prices near {location}</p>
       </div>
 
-<HealthPowerCard searchTerm={searchTerm} />
        <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2 filter-buttons"></div>
       {/* --- THIS IS THE NEW FILTER BUTTONS UI --- */}
 <div className="max-w-4xl mx-auto mb-8 flex justify-center flex-wrap gap-2 filter-buttons">
@@ -971,6 +1081,8 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
     </button>
 </div>
 
+<HealthPowerCard searchTerm={searchTerm} />
+
       <div className="max-w-4xl mx-auto space-y-8">
         {/* We now map over 'sortedResults' instead of 'searchResults' */}
         {sortedResults.length > 0 ? (
@@ -994,11 +1106,12 @@ const SearchResultsPage = ({ searchTerm, location, searchResults, setPage, filte
           <div className="flex flex-col items-end">
               <p className="text-xl font-bold text-green-600 bg-green-100 px-3 py-1 rounded-full">{shop.price}</p>
               <button 
-                onClick={() => { setShopToRate(shop); setRatingModalOpen(true); }}
-                className="mt-2 text-xs text-blue-600 hover:underline"
-              >
-                Rate & Review
-              </button>
+    onClick={() => setSelectedShopForReview(shop.name)}
+    className="bg-yellow-50 text-yellow-600 border border-yellow-200 px-2 py-1 rounded text-xs font-bold hover:bg-yellow-100 flex items-center gap-1"
+  >
+    <span>⭐ {shop.rating || 5.0}</span>
+    <span className="underline">Reviews</span>
+  </button>
           </div>
       </div>
   ))}
@@ -1082,6 +1195,7 @@ export default function App() {
   const [isInvitationModalOpen, setInvitationModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [isContestModalOpen, setContestModalOpen] = useState(false);
+  const [selectedShopForReview, setSelectedShopForReview] = useState(null);
 const gameModalRef = useRef(null);
 
   // ...
@@ -1211,6 +1325,7 @@ const renderPage = () => {
     setFilters={setFilters}
     setShopToRate={setShopToRate}
     setRatingModalOpen={setRatingModalOpen}
+setSelectedShopForReview={setSelectedShopForReview}
   />;
         case 'about':
           return <AboutPage />;
@@ -1254,7 +1369,13 @@ const renderPage = () => {
 <SubscriptionModal isOpen={isSubscriptionModalOpen} onClose={() => setSubscriptionModalOpen(false)} />
       <ContestModal isOpen={isContestModalOpen} onClose={() => setContestModalOpen(false)} />
         <InvitationModal isOpen={isInvitationModalOpen} onClose={() => setInvitationModalOpen(false)} />
- 
+ {/* REVIEW MODAL POPUP */}
+{selectedShopForReview && (
+  <ReviewsModal 
+    shopName={selectedShopForReview} 
+    onClose={() => setSelectedShopForReview(null)} 
+  />
+)}
         </div>
     );
 }
